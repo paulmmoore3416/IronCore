@@ -13,6 +13,7 @@ import com.ironcore.metrics.data.local.entities.Workout;
 import com.ironcore.metrics.data.local.entities.WorkoutSet;
 import java.lang.Class;
 import java.lang.Exception;
+import java.lang.Integer;
 import java.lang.Long;
 import java.lang.Object;
 import java.lang.Override;
@@ -58,7 +59,7 @@ public final class WorkoutDao_Impl implements WorkoutDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR REPLACE INTO `workout_sets` (`id`,`workoutId`,`exerciseId`,`reps`,`weight`,`timestamp`) VALUES (nullif(?, 0),?,?,?,?,?)";
+        return "INSERT OR REPLACE INTO `workout_sets` (`id`,`workoutId`,`exerciseId`,`reps`,`weight`,`rpe`,`restTimeSeconds`,`notes`,`timestamp`) VALUES (nullif(?, 0),?,?,?,?,?,?,?,?)";
       }
 
       @Override
@@ -69,7 +70,22 @@ public final class WorkoutDao_Impl implements WorkoutDao {
         statement.bindLong(3, entity.getExerciseId());
         statement.bindLong(4, entity.getReps());
         statement.bindDouble(5, entity.getWeight());
-        statement.bindLong(6, entity.getTimestamp());
+        if (entity.getRpe() == null) {
+          statement.bindNull(6);
+        } else {
+          statement.bindLong(6, entity.getRpe());
+        }
+        if (entity.getRestTimeSeconds() == null) {
+          statement.bindNull(7);
+        } else {
+          statement.bindLong(7, entity.getRestTimeSeconds());
+        }
+        if (entity.getNotes() == null) {
+          statement.bindNull(8);
+        } else {
+          statement.bindString(8, entity.getNotes());
+        }
+        statement.bindLong(9, entity.getTimestamp());
       }
     };
   }
@@ -169,6 +185,9 @@ public final class WorkoutDao_Impl implements WorkoutDao {
           final int _cursorIndexOfExerciseId = CursorUtil.getColumnIndexOrThrow(_cursor, "exerciseId");
           final int _cursorIndexOfReps = CursorUtil.getColumnIndexOrThrow(_cursor, "reps");
           final int _cursorIndexOfWeight = CursorUtil.getColumnIndexOrThrow(_cursor, "weight");
+          final int _cursorIndexOfRpe = CursorUtil.getColumnIndexOrThrow(_cursor, "rpe");
+          final int _cursorIndexOfRestTimeSeconds = CursorUtil.getColumnIndexOrThrow(_cursor, "restTimeSeconds");
+          final int _cursorIndexOfNotes = CursorUtil.getColumnIndexOrThrow(_cursor, "notes");
           final int _cursorIndexOfTimestamp = CursorUtil.getColumnIndexOrThrow(_cursor, "timestamp");
           final List<WorkoutSet> _result = new ArrayList<WorkoutSet>(_cursor.getCount());
           while (_cursor.moveToNext()) {
@@ -183,9 +202,27 @@ public final class WorkoutDao_Impl implements WorkoutDao {
             _tmpReps = _cursor.getInt(_cursorIndexOfReps);
             final float _tmpWeight;
             _tmpWeight = _cursor.getFloat(_cursorIndexOfWeight);
+            final Integer _tmpRpe;
+            if (_cursor.isNull(_cursorIndexOfRpe)) {
+              _tmpRpe = null;
+            } else {
+              _tmpRpe = _cursor.getInt(_cursorIndexOfRpe);
+            }
+            final Integer _tmpRestTimeSeconds;
+            if (_cursor.isNull(_cursorIndexOfRestTimeSeconds)) {
+              _tmpRestTimeSeconds = null;
+            } else {
+              _tmpRestTimeSeconds = _cursor.getInt(_cursorIndexOfRestTimeSeconds);
+            }
+            final String _tmpNotes;
+            if (_cursor.isNull(_cursorIndexOfNotes)) {
+              _tmpNotes = null;
+            } else {
+              _tmpNotes = _cursor.getString(_cursorIndexOfNotes);
+            }
             final long _tmpTimestamp;
             _tmpTimestamp = _cursor.getLong(_cursorIndexOfTimestamp);
-            _item = new WorkoutSet(_tmpId,_tmpWorkoutId,_tmpExerciseId,_tmpReps,_tmpWeight,_tmpTimestamp);
+            _item = new WorkoutSet(_tmpId,_tmpWorkoutId,_tmpExerciseId,_tmpReps,_tmpWeight,_tmpRpe,_tmpRestTimeSeconds,_tmpNotes,_tmpTimestamp);
             _result.add(_item);
           }
           return _result;

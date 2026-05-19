@@ -9,6 +9,7 @@ import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.ironcore.metrics.data.health.HealthConnectManager;
 import com.ironcore.metrics.data.local.IronCoreDatabase;
 import com.ironcore.metrics.data.local.dao.WorkoutDao;
 import com.ironcore.metrics.data.remote.HomelabApiService;
@@ -19,6 +20,8 @@ import com.ironcore.metrics.di.NetworkModule_ProvideHomelabApiServiceFactory;
 import com.ironcore.metrics.di.NetworkModule_ProvideOkHttpClientFactory;
 import com.ironcore.metrics.di.NetworkModule_ProvideRetrofitFactory;
 import com.ironcore.metrics.domain.repository.WorkoutRepository;
+import com.ironcore.metrics.ui.dashboard.DashboardViewModel;
+import com.ironcore.metrics.ui.dashboard.DashboardViewModel_HiltModules;
 import com.ironcore.metrics.ui.nutrition.NutritionViewModel;
 import com.ironcore.metrics.ui.nutrition.NutritionViewModel_HiltModules;
 import com.ironcore.metrics.ui.workout.WorkoutViewModel;
@@ -378,7 +381,7 @@ public final class DaggerIronCoreApplication_HiltComponents_SingletonC {
 
     @Override
     public Map<Class<?>, Boolean> getViewModelKeys() {
-      return LazyClassKeyMap.<Boolean>of(ImmutableMap.<String, Boolean>of(LazyClassKeyProvider.com_ironcore_metrics_ui_nutrition_NutritionViewModel, NutritionViewModel_HiltModules.KeyModule.provide(), LazyClassKeyProvider.com_ironcore_metrics_ui_workout_WorkoutViewModel, WorkoutViewModel_HiltModules.KeyModule.provide()));
+      return LazyClassKeyMap.<Boolean>of(ImmutableMap.<String, Boolean>of(LazyClassKeyProvider.com_ironcore_metrics_ui_dashboard_DashboardViewModel, DashboardViewModel_HiltModules.KeyModule.provide(), LazyClassKeyProvider.com_ironcore_metrics_ui_nutrition_NutritionViewModel, NutritionViewModel_HiltModules.KeyModule.provide(), LazyClassKeyProvider.com_ironcore_metrics_ui_workout_WorkoutViewModel, WorkoutViewModel_HiltModules.KeyModule.provide()));
     }
 
     @Override
@@ -402,11 +405,16 @@ public final class DaggerIronCoreApplication_HiltComponents_SingletonC {
 
       static String com_ironcore_metrics_ui_workout_WorkoutViewModel = "com.ironcore.metrics.ui.workout.WorkoutViewModel";
 
+      static String com_ironcore_metrics_ui_dashboard_DashboardViewModel = "com.ironcore.metrics.ui.dashboard.DashboardViewModel";
+
       @KeepFieldType
       NutritionViewModel com_ironcore_metrics_ui_nutrition_NutritionViewModel2;
 
       @KeepFieldType
       WorkoutViewModel com_ironcore_metrics_ui_workout_WorkoutViewModel2;
+
+      @KeepFieldType
+      DashboardViewModel com_ironcore_metrics_ui_dashboard_DashboardViewModel2;
     }
   }
 
@@ -416,6 +424,8 @@ public final class DaggerIronCoreApplication_HiltComponents_SingletonC {
     private final ActivityRetainedCImpl activityRetainedCImpl;
 
     private final ViewModelCImpl viewModelCImpl = this;
+
+    private Provider<DashboardViewModel> dashboardViewModelProvider;
 
     private Provider<NutritionViewModel> nutritionViewModelProvider;
 
@@ -434,13 +444,14 @@ public final class DaggerIronCoreApplication_HiltComponents_SingletonC {
     @SuppressWarnings("unchecked")
     private void initialize(final SavedStateHandle savedStateHandleParam,
         final ViewModelLifecycle viewModelLifecycleParam) {
-      this.nutritionViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 0);
-      this.workoutViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 1);
+      this.dashboardViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 0);
+      this.nutritionViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 1);
+      this.workoutViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 2);
     }
 
     @Override
     public Map<Class<?>, javax.inject.Provider<ViewModel>> getHiltViewModelMap() {
-      return LazyClassKeyMap.<javax.inject.Provider<ViewModel>>of(ImmutableMap.<String, javax.inject.Provider<ViewModel>>of(LazyClassKeyProvider.com_ironcore_metrics_ui_nutrition_NutritionViewModel, ((Provider) nutritionViewModelProvider), LazyClassKeyProvider.com_ironcore_metrics_ui_workout_WorkoutViewModel, ((Provider) workoutViewModelProvider)));
+      return LazyClassKeyMap.<javax.inject.Provider<ViewModel>>of(ImmutableMap.<String, javax.inject.Provider<ViewModel>>of(LazyClassKeyProvider.com_ironcore_metrics_ui_dashboard_DashboardViewModel, ((Provider) dashboardViewModelProvider), LazyClassKeyProvider.com_ironcore_metrics_ui_nutrition_NutritionViewModel, ((Provider) nutritionViewModelProvider), LazyClassKeyProvider.com_ironcore_metrics_ui_workout_WorkoutViewModel, ((Provider) workoutViewModelProvider)));
     }
 
     @Override
@@ -450,15 +461,20 @@ public final class DaggerIronCoreApplication_HiltComponents_SingletonC {
 
     @IdentifierNameString
     private static final class LazyClassKeyProvider {
-      static String com_ironcore_metrics_ui_workout_WorkoutViewModel = "com.ironcore.metrics.ui.workout.WorkoutViewModel";
-
       static String com_ironcore_metrics_ui_nutrition_NutritionViewModel = "com.ironcore.metrics.ui.nutrition.NutritionViewModel";
 
-      @KeepFieldType
-      WorkoutViewModel com_ironcore_metrics_ui_workout_WorkoutViewModel2;
+      static String com_ironcore_metrics_ui_dashboard_DashboardViewModel = "com.ironcore.metrics.ui.dashboard.DashboardViewModel";
+
+      static String com_ironcore_metrics_ui_workout_WorkoutViewModel = "com.ironcore.metrics.ui.workout.WorkoutViewModel";
 
       @KeepFieldType
       NutritionViewModel com_ironcore_metrics_ui_nutrition_NutritionViewModel2;
+
+      @KeepFieldType
+      DashboardViewModel com_ironcore_metrics_ui_dashboard_DashboardViewModel2;
+
+      @KeepFieldType
+      WorkoutViewModel com_ironcore_metrics_ui_workout_WorkoutViewModel2;
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
@@ -482,10 +498,13 @@ public final class DaggerIronCoreApplication_HiltComponents_SingletonC {
       @Override
       public T get() {
         switch (id) {
-          case 0: // com.ironcore.metrics.ui.nutrition.NutritionViewModel 
+          case 0: // com.ironcore.metrics.ui.dashboard.DashboardViewModel 
+          return (T) new DashboardViewModel(singletonCImpl.healthConnectManagerProvider.get());
+
+          case 1: // com.ironcore.metrics.ui.nutrition.NutritionViewModel 
           return (T) new NutritionViewModel(singletonCImpl.provideHomelabApiServiceProvider.get());
 
-          case 1: // com.ironcore.metrics.ui.workout.WorkoutViewModel 
+          case 2: // com.ironcore.metrics.ui.workout.WorkoutViewModel 
           return (T) new WorkoutViewModel(singletonCImpl.bindWorkoutRepositoryProvider.get());
 
           default: throw new AssertionError(id);
@@ -568,6 +587,8 @@ public final class DaggerIronCoreApplication_HiltComponents_SingletonC {
 
     private final SingletonCImpl singletonCImpl = this;
 
+    private Provider<HealthConnectManager> healthConnectManagerProvider;
+
     private Provider<OkHttpClient> provideOkHttpClientProvider;
 
     private Provider<Retrofit> provideRetrofitProvider;
@@ -592,11 +613,12 @@ public final class DaggerIronCoreApplication_HiltComponents_SingletonC {
 
     @SuppressWarnings("unchecked")
     private void initialize(final ApplicationContextModule applicationContextModuleParam) {
-      this.provideOkHttpClientProvider = DoubleCheck.provider(new SwitchingProvider<OkHttpClient>(singletonCImpl, 2));
-      this.provideRetrofitProvider = DoubleCheck.provider(new SwitchingProvider<Retrofit>(singletonCImpl, 1));
-      this.provideHomelabApiServiceProvider = DoubleCheck.provider(new SwitchingProvider<HomelabApiService>(singletonCImpl, 0));
-      this.provideDatabaseProvider = DoubleCheck.provider(new SwitchingProvider<IronCoreDatabase>(singletonCImpl, 4));
-      this.workoutRepositoryImplProvider = new SwitchingProvider<>(singletonCImpl, 3);
+      this.healthConnectManagerProvider = DoubleCheck.provider(new SwitchingProvider<HealthConnectManager>(singletonCImpl, 0));
+      this.provideOkHttpClientProvider = DoubleCheck.provider(new SwitchingProvider<OkHttpClient>(singletonCImpl, 3));
+      this.provideRetrofitProvider = DoubleCheck.provider(new SwitchingProvider<Retrofit>(singletonCImpl, 2));
+      this.provideHomelabApiServiceProvider = DoubleCheck.provider(new SwitchingProvider<HomelabApiService>(singletonCImpl, 1));
+      this.provideDatabaseProvider = DoubleCheck.provider(new SwitchingProvider<IronCoreDatabase>(singletonCImpl, 5));
+      this.workoutRepositoryImplProvider = new SwitchingProvider<>(singletonCImpl, 4);
       this.bindWorkoutRepositoryProvider = DoubleCheck.provider((Provider) workoutRepositoryImplProvider);
     }
 
@@ -633,19 +655,22 @@ public final class DaggerIronCoreApplication_HiltComponents_SingletonC {
       @Override
       public T get() {
         switch (id) {
-          case 0: // com.ironcore.metrics.data.remote.HomelabApiService 
+          case 0: // com.ironcore.metrics.data.health.HealthConnectManager 
+          return (T) new HealthConnectManager(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule));
+
+          case 1: // com.ironcore.metrics.data.remote.HomelabApiService 
           return (T) NetworkModule_ProvideHomelabApiServiceFactory.provideHomelabApiService(singletonCImpl.provideRetrofitProvider.get());
 
-          case 1: // retrofit2.Retrofit 
+          case 2: // retrofit2.Retrofit 
           return (T) NetworkModule_ProvideRetrofitFactory.provideRetrofit(singletonCImpl.provideOkHttpClientProvider.get());
 
-          case 2: // okhttp3.OkHttpClient 
+          case 3: // okhttp3.OkHttpClient 
           return (T) NetworkModule_ProvideOkHttpClientFactory.provideOkHttpClient();
 
-          case 3: // com.ironcore.metrics.data.repository.WorkoutRepositoryImpl 
+          case 4: // com.ironcore.metrics.data.repository.WorkoutRepositoryImpl 
           return (T) new WorkoutRepositoryImpl(singletonCImpl.workoutDao());
 
-          case 4: // com.ironcore.metrics.data.local.IronCoreDatabase 
+          case 5: // com.ironcore.metrics.data.local.IronCoreDatabase 
           return (T) AppModule_ProvideDatabaseFactory.provideDatabase(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule));
 
           default: throw new AssertionError(id);

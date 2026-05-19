@@ -3,6 +3,7 @@ package com.ironcore.metrics;
 import com.ironcore.metrics.di.AppModule;
 import com.ironcore.metrics.di.NetworkModule;
 import com.ironcore.metrics.di.RepositoryModule;
+import com.ironcore.metrics.ui.dashboard.DashboardViewModel_HiltModules;
 import com.ironcore.metrics.ui.nutrition.NutritionViewModel_HiltModules;
 import com.ironcore.metrics.ui.workout.WorkoutViewModel_HiltModules;
 import dagger.Binds;
@@ -149,6 +150,7 @@ public final class IronCoreApplication_HiltComponents {
 
   @Subcomponent(
       modules = {
+          DashboardViewModel_HiltModules.KeyModule.class,
           HiltWrapper_ActivityRetainedComponentManager_LifecycleModule.class,
           HiltWrapper_SavedStateHandleModule.class,
           ActivityCBuilderModule.class,
@@ -190,6 +192,7 @@ public final class IronCoreApplication_HiltComponents {
 
   @Subcomponent(
       modules = {
+          DashboardViewModel_HiltModules.BindsModule.class,
           HiltWrapper_HiltViewModelFactory_ViewModelModule.class,
           NutritionViewModel_HiltModules.BindsModule.class,
           WorkoutViewModel_HiltModules.BindsModule.class

@@ -10,16 +10,33 @@ import androidx.compose.material.icons.filled.Scale
 import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.ironcore.metrics.ui.components.IronCoreCard
 import com.ironcore.metrics.ui.theme.CobaltBlue
 import com.ironcore.metrics.ui.theme.Granite
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @Composable
-fun DashboardScreen() {
+fun DashboardScreen(
+    viewModel: DashboardViewModel = hiltViewModel()
+) {
+    val steps by viewModel.steps.collectAsState()
+    val heartRate by viewModel.heartRate.collectAsState()
+    val weight by viewModel.weight.collectAsState()
+    val permissionsGranted by viewModel.permissionsGranted.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.checkPermissionsAndFetchData()
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -31,10 +48,19 @@ fun DashboardScreen() {
             color = MaterialTheme.colorScheme.onBackground
         )
         Text(
-            text = "Tuesday, May 19",
+            text = LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, MMM dd")),
             style = MaterialTheme.typography.labelLarge,
             color = CobaltBlue
         )
+
+        if (!permissionsGranted) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Health Connect permissions required for live data.",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -47,26 +73,26 @@ fun DashboardScreen() {
         ) {
             item {
                 MetricCard(
-                    title = "Active Energy",
-                    value = "850 kcal",
+                    title = "Steps (7 Days)",
+                    value = "$steps",
                     icon = Icons.Default.ElectricBolt,
-                    trend = "+12% from yesterday"
+                    trend = "Active"
                 )
             }
             item {
                 MetricCard(
-                    title = "Heart Rate",
-                    value = "72 BPM",
+                    title = "Latest HR",
+                    value = if (heartRate > 0) "$heartRate BPM" else "--",
                     icon = Icons.Default.Favorite,
-                    trend = "Resting: 64"
+                    trend = "Recent Reading"
                 )
             }
             item {
                 MetricCard(
                     title = "Body Weight",
-                    value = "88.5 kg",
+                    value = if (weight > 0.0) String.format("%.1f kg", weight) else "--",
                     icon = Icons.Default.Scale,
-                    trend = "-0.2 kg"
+                    trend = "Latest logged"
                 )
             }
             item {
@@ -93,6 +119,7 @@ fun DashboardScreen() {
         }
     }
 }
+
 
 @Composable
 fun MetricCard(

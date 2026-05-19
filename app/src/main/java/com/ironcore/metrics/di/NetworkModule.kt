@@ -29,7 +29,9 @@ object NetworkModule {
     @Singleton
     fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("http://your-homelab-ip:5000/") // User should replace this
+            // 10.0.2.2 is the special alias to your host loopback interface in the Android emulator.
+            // If running on a physical device, this should be the local IP of the homelab running Ollama/Granite.
+            .baseUrl("http://10.0.2.2:11434/") 
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

@@ -6,10 +6,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ironcore.metrics.ui.components.IronCoreButton
 import com.ironcore.metrics.ui.components.IronCoreCard
+import com.ironcore.metrics.ui.theme.CobaltBlue
+import com.ironcore.metrics.ui.theme.Granite
 
 @Composable
 fun WorkoutLoggerScreen(
