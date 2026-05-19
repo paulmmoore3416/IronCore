@@ -1,9 +1,13 @@
 package com.ironcore.metrics.data.local.entities
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "meals")
+@Entity(
+    tableName = "meals",
+    indices = [Index(value = ["timestamp"], name = "idx_meal_timestamp")]
+)
 data class Meal(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String, // e.g., Breakfast, Post-Workout
@@ -14,7 +18,10 @@ data class Meal(
     val fatGrams: Float = 0f
 )
 
-@Entity(tableName = "food_entries")
+@Entity(
+    tableName = "food_entries",
+    indices = [Index(value = ["mealId"], name = "idx_food_entry_meal_id")]
+)
 data class FoodEntry(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val mealId: Long,

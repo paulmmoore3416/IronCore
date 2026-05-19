@@ -3,6 +3,8 @@ package com.ironcore.metrics.data.health
 import android.content.Context
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
+import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.WeightRecord
@@ -31,7 +33,10 @@ class HealthConnectManager @Inject constructor(
         HealthPermission.getReadPermission(HeartRateRecord::class),
         HealthPermission.getWritePermission(HeartRateRecord::class),
         HealthPermission.getReadPermission(WeightRecord::class),
-        HealthPermission.getWritePermission(WeightRecord::class)
+        HealthPermission.getWritePermission(WeightRecord::class),
+        HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class),
+        HealthPermission.getWritePermission(ActiveCaloriesBurnedRecord::class),
+        HealthPermission.getReadPermission(ExerciseSessionRecord::class)
     )
 
     suspend fun hasAllPermissions(): Boolean {
@@ -54,6 +59,17 @@ class HealthConnectManager @Inject constructor(
         return response.records.sumOf { it.count }
     }
 
+    suspend fun readActiveCalories(startTime: Instant, endTime: Instant): Double {
+        if (!hasAllPermissions()) return 0.0
+        val response = healthConnectClient.readRecords(
+            ReadRecordsRequest(
+                recordType = ActiveCaloriesBurnedRecord::class,
+                timeRangeFilter = TimeRangeFilter.between(startTime, endTime)
+            )
+        )
+        return response.records.sumOf { it.energy.inKilocalories }
+    }
+
     suspend fun readLatestHeartRate(startTime: Instant, endTime: Instant): Long {
         if (!hasAllPermissions()) return 0L
         val response = healthConnectClient.readRecords(
@@ -74,6 +90,26 @@ class HealthConnectManager @Inject constructor(
             )
         )
         return response.records.lastOrNull()?.weight?.inKilograms ?: 0.0
+    }
+
+    /**
+     * Reads the most recent active exercise session to determine current activity type.
+     * Returns null if no active session is found.
+     */
+    suspend fun readCurrentActivityType(startTime: Instant, endTime: Instant): Int? {
+        if (!hasAllPermissions()) return null
+        val response = healthConnectClient.readRecords(
+            ReadRecordsRequest(
+                recordType = ExerciseSessionRecord::class,
+                timeRangeFilter = TimeRangeFilter.between(startTime, endTime)
+            )
+        )
+        // Find the most recent session that overlaps with current time
+        val now = Instant.now()
+        return response.records
+            .filter { it.startTime <= now && it.endTime >= now }
+            .maxByOrNull { it.startTime }
+            ?.exerciseType
     }
 }
 

@@ -5,8 +5,12 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.HEALTH_READ_STEPS" />
     <uses-permission android:name="android.permission.HEALTH_READ_HEART_RATE" />
+    <uses-permission android:name="android.permission.HEALTH_READ_WEIGHT" />
+    <uses-permission android:name="android.permission.HEALTH_READ_ACTIVE_CALORIES_BURNED" />
     <uses-permission android:name="android.permission.HEALTH_WRITE_STEPS" />
     <uses-permission android:name="android.permission.HEALTH_WRITE_HEART_RATE" />
+    <uses-permission android:name="android.permission.HEALTH_WRITE_WEIGHT" />
+    <uses-permission android:name="android.permission.HEALTH_WRITE_ACTIVE_CALORIES_BURNED" />
 
     <queries>
         <package android:name="com.spotify.music" />
@@ -40,6 +44,19 @@
         <meta-data
             android:name="health_permissions_plugin"
             android:value="com.ironcore.metrics" />
+
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc" />
+
+        <service
+            android:name=".car.IronCoreCarAppService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.car.app.CarAppService" />
+                <category android:name="androidx.car.app.category.POI" />
+            </intent-filter>
+        </service>
 
     </application>
 

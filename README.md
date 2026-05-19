@@ -1,46 +1,91 @@
-# IronCore Metrics
+# 🛡️ IronCore Metrics
 
-IronCore Metrics is a high-performance, AI-integrated health and fitness application designed for the Google Pixel 10 Pro XL and Wear OS. 
+[![Platform](https://img.shields.io/badge/Platform-Android-green.svg)](https://developer.android.com/about/versions/15)
+[![Hardware](https://img.shields.io/badge/Target-Pixel%2010%20Pro%20XL-blue.svg)](https://store.google.com/product/pixel_10_pro)
+[![Wear OS](https://img.shields.io/badge/Companion-Wear%20OS-orange.svg)](https://developer.android.com/wear)
+[![Android Auto](https://img.shields.io/badge/Integration-Android%20Auto-blue.svg)](https://developer.android.com/cars/design/android-auto)
 
-## Features
+**IronCore Metrics** is a high-performance, AI-integrated health and fitness ecosystem designed for the modern athlete. Engineered specifically for the **Google Pixel 10 Pro XL**, **Wear OS**, and **Android Auto** (Hyundai Santa Fe integration), it provides a seamless, data-driven approach to training, nutrition, and recovery.
 
-- **Advanced Workout Logging:** Detailed set and rep tracking with historical analysis.
-- **AI-Powered Nutrition:** Connects to your Homelab AI backend to generate personalized meal plans based on your goals.
-- **Health Connect Integration:** Syncs heart rate, steps, and activity data across all your devices.
-- **Wear OS Companion:** Real-time workout tracking and heart rate monitoring on your wrist.
-- **Media Integration:** Seamless control of Spotify and YouTube Music during your training sessions.
-- **Premium Design:** Sophisticated dark theme using GitHub Space Gray, IBM Cobalt Blue, and Granite.
+---
 
-## Tech Stack
+## 🚀 Key Capabilities
 
-- **UI:** Jetpack Compose (Mobile & Wear OS)
-- **Architecture:** MVVM + Clean Architecture
+### 🧠 AI-Powered Intelligence
+- **Homelab AI Backend:** Connects to your private Homelab (Ollama/Granite) for personalized meal plans and recovery advice.
+- **Recovery Advisor:** Heuristic-based readiness scoring (%) that evaluates your physical state and suggests training intensity.
+- **Dynamic HR Thresholds:** Real-time heart rate monitoring with automated safety alerts if thresholds are exceeded.
+
+### 🏥 Health Connect Ecosystem
+- **Centralized Data:** Seamlessly syncs Heart Rate, Steps, Active Calories, Weight, and Activity data.
+- **Energy Balance:** Automatically calculates your Net Energy Balance by comparing Active Calories Burned (via Health Connect) with Calories Consumed (via local Nutrition tracking).
+
+### ⌚ Wear OS & Ecosystem
+- **Wrist-Based Tracking:** Real-time workout logging and heart rate monitoring on Wear OS.
+- **Android Auto Integration:** View workout summaries and critical health alerts (Emergency HUD) directly on your Hyundai Santa Fe head unit while driving.
+- **Media Control:** Integrated Spotify and YouTube Music controls for focused training sessions.
+
+---
+
+## ✨ Features
+
+### 📊 Advanced Dashboard
+- **Vitals at a Glance:** Real-time visualization of steps, heart rate, and weight.
+- **Hydration Tracker:** Log water intake with a smart 2000ml daily target.
+- **Active Energy HUD:** Circular progress visualization of your caloric balance.
+
+### 🏋️ Workout Architecture
+- **Surgical Tracking:** Detailed set/rep logging with historical volume analysis.
+- **Recovery Coaching:** Proactive suggestions on when to push and when to rest based on physiological markers.
+
+### 🚨 Safety & Monitoring
+- **Vitals Monitor Worker:** Background WorkManager task (15-min intervals) monitoring for high-stress vitals (e.g., HR > 180 BPM).
+- **Emergency Notifications:** CarAppExtender-enabled alerts that pop up on vehicle displays during critical health events.
+
+---
+
+## 🛠️ Technical Stack
+
+- **UI:** Jetpack Compose & Compose for Wear OS (Material 3)
+- **Architecture:** MVVM + Clean Architecture (Domain-driven)
 - **Dependency Injection:** Hilt
-- **Database:** Room (Offline-first)
-- **Networking:** Retrofit + OkHttp
-- **AI:** Hybrid approach (On-Device AICore + Homelab Remote AI)
+- **Persistence:** Room (Offline-first architecture)
+- **Networking:** Retrofit + OkHttp for AI Backend interaction
+- **Background Tasks:** WorkManager for persistent vitals monitoring
+- **Connectivity:** Health Connect Client & Android Auto Car App Library
 
-## Setup Instructions
+---
 
-1.  **Prerequisites:** Android Studio Jellyfish+ and Android SDK 35.
-2.  **Cloning:** The project is located in `IronCoreMetrics/`.
-3.  **AI Backend Configuration:**
-    - Open `NetworkModule.kt` in the `app` module.
-    - Update the `baseUrl` to point to your Homelab AI API IP address.
-4.  **Health Connect:**
-    - Ensure the Health Connect app is installed on your device or emulator.
-    - Grant permissions when prompted within IronCore Metrics.
+## 🛠️ Setup & Configuration
 
-## Development Guide
+1. **Prerequisites:**
+   - Android Studio Jellyfish+
+   - Android SDK 35 (VanillaIceCream)
+   - Pixel 10 Pro XL (Target Device)
 
-### Project Structure
-- `app/`: The primary mobile application module.
-- `wear/`: The Wear OS companion module.
-- `gradle/libs.versions.toml`: Centralized dependency management.
+2. **AI Configuration:**
+   - Update `NetworkModule.kt` with your Homelab AI API IP address.
+   - Ensure your local Ollama instance is running the `granite-code` or equivalent model.
 
-### Testing
-- Run `./gradlew test` to execute unit tests.
-- UI tests are located in `androidTest` directories.
+3. **Build:**
+   ```bash
+   # Use the project-specific gradle if system gradle is outdated
+   ./gradlew assembleDebug
+   ```
 
-## License
-Free and open-source for personal use. Built with a focus on privacy and high performance.
+---
+
+## 🎨 Visual Preview
+
+![Dashboard Preview](Fitness-app.jpg)
+*High-performance dashboard featuring GitHub Space Gray and IBM Cobalt Blue aesthetics.*
+
+---
+
+## 🔒 Privacy & Safety
+IronCore Metrics is built with a **Privacy-First** philosophy. Your health data stays on your device (Room DB) and your private network (Homelab AI). No data is sold or sent to third-party advertisers.
+
+---
+
+## 📜 License
+Personal Use License. High-performance metrics for high-performance individuals.

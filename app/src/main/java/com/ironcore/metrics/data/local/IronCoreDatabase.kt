@@ -11,11 +11,14 @@ import com.ironcore.metrics.data.local.entities.*
         Workout::class,
         WorkoutSet::class,
         Meal::class,
-        FoodEntry::class
+        FoodEntry::class,
+        HydrationLog::class
     ],
     version = 1,
     exportSchema = false
 )
 abstract class IronCoreDatabase : RoomDatabase() {
     abstract fun workoutDao(): com.ironcore.metrics.data.local.dao.WorkoutDao
+    abstract fun nutritionDao(): com.ironcore.metrics.data.local.dao.NutritionDao
+    abstract fun userProfileDao(): com.ironcore.metrics.data.local.dao.UserProfileDao
 }

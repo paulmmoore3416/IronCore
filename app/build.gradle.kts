@@ -80,6 +80,12 @@ dependencies {
     // Health Connect
     implementation(libs.androidx.health.connect.client)
 
+    // WorkManager
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+
+    // Android Auto
+    implementation(libs.androidx.car.app)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

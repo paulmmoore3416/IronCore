@@ -31,6 +31,11 @@ fun DashboardScreen(
     val steps by viewModel.steps.collectAsState()
     val heartRate by viewModel.heartRate.collectAsState()
     val weight by viewModel.weight.collectAsState()
+    val activeCaloriesBurned by viewModel.activeCaloriesBurned.collectAsState()
+    val consumedCalories by viewModel.consumedCalories.collectAsState()
+    val energyBalance by viewModel.energyBalance.collectAsState()
+    val hydrationMl by viewModel.hydrationMl.collectAsState()
+    val recoveryScore by viewModel.recoveryScore.collectAsState()
     val permissionsGranted by viewModel.permissionsGranted.collectAsState()
 
     LaunchedEffect(Unit) {
@@ -89,6 +94,14 @@ fun DashboardScreen(
             }
             item {
                 MetricCard(
+                    title = "Active Energy",
+                    value = if (activeCaloriesBurned > 0.0) String.format("%.0f kcal", activeCaloriesBurned) else "--",
+                    icon = Icons.Default.ElectricBolt,
+                    trend = "Total Burned (7d)"
+                )
+            }
+            item {
+                MetricCard(
                     title = "Body Weight",
                     value = if (weight > 0.0) String.format("%.1f kg", weight) else "--",
                     icon = Icons.Default.Scale,
@@ -103,11 +116,25 @@ fun DashboardScreen(
                     trend = "3 sessions this week"
                 )
             }
+            item {
+                MetricCard(
+                    title = "Hydration",
+                    value = "$hydrationMl ml",
+                    icon = Icons.Default.ElectricBolt,
+                    trend = "Target: 2000ml"
+                )
+            }
 
             item {
                 DetailedSectionCard(
-                    title = "Nutrition Balance",
-                    subtitle = "Protein focus reached"
+                    title = "Recovery Advisor",
+                    subtitle = "Readiness: $recoveryScore%"
+                )
+            }
+            item {
+                DetailedSectionCard(
+                    title = "Energy Balance",
+                    subtitle = "Consumed: $consumedCalories | Net: $energyBalance kcal"
                 )
             }
             item {

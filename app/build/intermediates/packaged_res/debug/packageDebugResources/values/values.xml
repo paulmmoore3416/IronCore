@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <color name="white">#FFFFFFFF</color>
-    <string name="app_name">IronCore Metrics</string>
-    <style name="Theme.IronCoreMetrics" parent="android:Theme.Material.Light.NoActionBar"/>
-</resources>
