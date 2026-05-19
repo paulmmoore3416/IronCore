@@ -1,0 +1,10 @@
+R_DEF: Internal format may change without notice
+local
+color white
+drawable ic_ironcore_logo
+mipmap ic_launcher
+mipmap ic_launcher_round
+string app_name
+style Theme.IronCoreMetrics
+xml backup_rules
+xml data_extraction_rules
