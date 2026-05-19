@@ -80,6 +80,19 @@ dependencies {
     // Health Connect
     implementation(libs.androidx.health.connect.client)
 
+    // Vico Charts
+    implementation(libs.vico.compose)
+    
+    // Biometrics
+    implementation(libs.androidx.biometric)
+
+    // DataStore
+    implementation(libs.androidx.datastore.preferences)
+
+    // Wear OS Sync
+    implementation(libs.play.services.wearable)
+    implementation(libs.kotlinx.coroutines.play.services)
+
     // WorkManager
     implementation("androidx.work:work-runtime-ktx:2.9.0")
 

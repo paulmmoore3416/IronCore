@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.ironcore.metrics.data.local.IronCoreDatabase
 import com.ironcore.metrics.data.local.dao.WorkoutDao
 import com.ironcore.metrics.data.local.dao.NutritionDao
+import com.ironcore.metrics.data.local.dao.UserProfileDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -34,5 +35,10 @@ object AppModule {
     @Provides
     fun provideNutritionDao(database: IronCoreDatabase): NutritionDao {
         return database.nutritionDao()
+    }
+
+    @Provides
+    fun provideUserProfileDao(database: IronCoreDatabase): UserProfileDao {
+        return database.userProfileDao()
     }
 }

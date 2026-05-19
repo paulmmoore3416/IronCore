@@ -8,6 +8,10 @@ import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.WeightRecord
+import androidx.health.connect.client.records.SleepSessionRecord
+import androidx.health.connect.client.records.HydrationRecord
+import androidx.health.connect.client.records.OxygenSaturationRecord
+import androidx.health.connect.client.records.RespiratoryRateRecord
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -36,7 +40,11 @@ class HealthConnectManager @Inject constructor(
         HealthPermission.getWritePermission(WeightRecord::class),
         HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class),
         HealthPermission.getWritePermission(ActiveCaloriesBurnedRecord::class),
-        HealthPermission.getReadPermission(ExerciseSessionRecord::class)
+        HealthPermission.getReadPermission(ExerciseSessionRecord::class),
+        HealthPermission.getReadPermission(SleepSessionRecord::class),
+        HealthPermission.getReadPermission(HydrationRecord::class),
+        HealthPermission.getReadPermission(OxygenSaturationRecord::class),
+        HealthPermission.getReadPermission(RespiratoryRateRecord::class)
     )
 
     suspend fun hasAllPermissions(): Boolean {
@@ -90,6 +98,39 @@ class HealthConnectManager @Inject constructor(
             )
         )
         return response.records.lastOrNull()?.weight?.inKilograms ?: 0.0
+    }
+
+    suspend fun readSleepDuration(startTime: Instant, endTime: Instant): Long {
+        if (!hasAllPermissions()) return 0L
+        val response = healthConnectClient.readRecords(
+            ReadRecordsRequest(
+                recordType = SleepSessionRecord::class,
+                timeRangeFilter = TimeRangeFilter.between(startTime, endTime)
+            )
+        )
+        return response.records.sumOf { java.time.Duration.between(it.startTime, it.endTime).toMinutes() }
+    }
+
+    suspend fun readLatestOxygenSaturation(startTime: Instant, endTime: Instant): Double {
+        if (!hasAllPermissions()) return 0.0
+        val response = healthConnectClient.readRecords(
+            ReadRecordsRequest(
+                recordType = OxygenSaturationRecord::class,
+                timeRangeFilter = TimeRangeFilter.between(startTime, endTime)
+            )
+        )
+        return response.records.lastOrNull()?.percentage?.value ?: 0.0
+    }
+
+    suspend fun readLatestRespiratoryRate(startTime: Instant, endTime: Instant): Double {
+        if (!hasAllPermissions()) return 0.0
+        val response = healthConnectClient.readRecords(
+            ReadRecordsRequest(
+                recordType = RespiratoryRateRecord::class,
+                timeRangeFilter = TimeRangeFilter.between(startTime, endTime)
+            )
+        )
+        return response.records.lastOrNull()?.rate ?: 0.0
     }
 
     /**

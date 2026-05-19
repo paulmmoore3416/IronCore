@@ -26,10 +26,6 @@ class VitalsMonitorWorker(
     workerParams: WorkerParameters
 ) : CoroutineWorker(context, workerParams) {
 
-    companion object {
-        private const val TAG = "VitalsMonitorWorker"
-    }
-
     @EntryPoint
     @InstallIn(SingletonComponent::class)
     interface VitalsWorkerEntryPoint {
@@ -90,6 +86,7 @@ class VitalsMonitorWorker(
     }
 
     companion object {
+        private const val TAG = "VitalsMonitorWorker"
         private const val WORK_NAME = "VitalsMonitorWork"
 
         fun enqueue(context: Context) {

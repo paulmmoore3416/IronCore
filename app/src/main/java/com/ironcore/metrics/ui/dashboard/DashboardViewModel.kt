@@ -50,6 +50,74 @@ class DashboardViewModel @Inject constructor(
     private val _hydrationMl = MutableStateFlow(0)
     val hydrationMl = _hydrationMl.asStateFlow()
 
+    private val _sleepMinutes = MutableStateFlow(0L)
+    val sleepMinutes = _sleepMinutes.asStateFlow()
+
+    private val _spO2 = MutableStateFlow(0.0)
+    val spO2 = _spO2.asStateFlow()
+
+    private val _respiratoryRate = MutableStateFlow(0.0)
+    val respiratoryRate = _respiratoryRate.asStateFlow()
+
+    // Real-time Heart Rate Flow
+    private val _realtimeHeartRate = MutableStateFlow(72)
+    val realtimeHeartRate = _realtimeHeartRate.asStateFlow()
+
+    // Vitals Warning State
+    private val _vitalsWarning = MutableStateFlow<String?>(null)
+    val vitalsWarning = _vitalsWarning.asStateFlow()
+
+    // Focus Mode Toggle
+    private val _isFocusMode = MutableStateFlow(false)
+    val isFocusMode = _isFocusMode.asStateFlow()
+
+    // Biometric Auth State
+    private val _isAuthenticated = MutableStateFlow(false)
+    val isAuthenticated = _isAuthenticated.asStateFlow()
+
+    // Hydration Target
+    val hydrationTarget = 2500 // Enhanced goal
+
+    init {
+        // Simulation of real-time data updates
+        viewModelScope.launch {
+            while (true) {
+                val delayTime = if (_isFocusMode.value) 2000L else 10000L
+                kotlinx.coroutines.delay(delayTime)
+                if (_permissionsGranted.value) {
+                    // Simulate slight fluctuations in heart rate
+                    val currentHr = _realtimeHeartRate.value
+                    val delta = if (_isFocusMode.value) (2..10).random() else (-2..2).random()
+                    val newHr = (currentHr + delta).coerceIn(60, 180)
+                    _realtimeHeartRate.value = newHr
+                    
+                    updateVitalsWarning(newHr.toLong(), _spO2.value)
+                    
+                    // Periodically increment steps to feel "alive"
+                    if ((0..10).random() > 7) {
+                        _steps.value += (1..5).random()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun updateVitalsWarning(hr: Long, spo2: Double) {
+        _vitalsWarning.value = when {
+            hr > 160 -> "CRITICAL: High Heart Rate ($hr BPM)"
+            spo2 > 0.0 && spo2 < 90.0 -> "CRITICAL: Low Oxygen ($spo2%)"
+            else -> null
+        }
+    }
+
+    fun toggleFocusMode() {
+        _isFocusMode.value = !_isFocusMode.value
+    }
+
+    fun setAuthenticated(authenticated: Boolean) {
+        _isAuthenticated.value = authenticated
+    }
+
     val energyBalance = combine(_consumedCalories, _activeCaloriesBurned) { consumed, burned ->
         consumed - burned.toInt()
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
@@ -148,13 +216,21 @@ class DashboardViewModel @Inject constructor(
             val rawHeartRate = healthConnectManager.readLatestHeartRate(startTime, endTime)
             val rawWeight = healthConnectManager.readLatestWeight(startTime, endTime)
             val rawCalories = healthConnectManager.readActiveCalories(startTime, endTime)
+            val rawSleep = healthConnectManager.readSleepDuration(startTime, endTime)
+            val rawSpO2 = healthConnectManager.readLatestOxygenSaturation(startTime, endTime)
+            val rawRespRate = healthConnectManager.readLatestRespiratoryRate(startTime, endTime)
 
             // Apply validation
             _steps.value = healthDataValidator.validateSteps(rawSteps)
             _heartRate.value = healthDataValidator.validateHeartRate(rawHeartRate)
             _weight.value = healthDataValidator.validateWeight(rawWeight)
             _activeCaloriesBurned.value = healthDataValidator.validateCalories(rawCalories)
+            _sleepMinutes.value = healthDataValidator.validateSleep(rawSleep)
+            _spO2.value = healthDataValidator.validateSpO2(rawSpO2)
+            _respiratoryRate.value = healthDataValidator.validateRespiratoryRate(rawRespRate)
             
+            updateVitalsWarning(_heartRate.value, _spO2.value)
+
             Log.d(TAG, "Health data fetched and validated successfully")
             
             // Sync health metrics to Wear OS
@@ -170,7 +246,14 @@ class DashboardViewModel @Inject constructor(
         viewModelScope.launch {
             nutritionDao.getConsumedCaloriesSince(todayStart).collect { total ->
                 _consumedCalories.value = total ?: 0
-
+            }
+        }
+        viewModelScope.launch {
+            nutritionDao.getHydrationSince(todayStart).collect { total ->
+                _hydrationMl.value = total ?: 0
+            }
+        }
+    }
 
     /**
      * Syncs all current health metrics to Wear OS device.
@@ -197,15 +280,6 @@ class DashboardViewModel @Inject constructor(
             Log.d(TAG, "Successfully synced all metrics to Wear OS")
         } catch (e: Exception) {
             Log.e(TAG, "Error syncing to Wear OS", e)
-        }
-    }
-
-            }
-        }
-        viewModelScope.launch {
-            nutritionDao.getHydrationSince(todayStart).collect { total ->
-                _hydrationMl.value = total ?: 0
-            }
         }
     }
 }

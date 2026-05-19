@@ -65,7 +65,6 @@ class HeartRateThresholdCalculator @Inject constructor() {
             // Vigorous activities (running, cycling, HIIT, etc.)
             ExerciseSessionRecord.EXERCISE_TYPE_RUNNING,
             ExerciseSessionRecord.EXERCISE_TYPE_RUNNING_TREADMILL,
-            ExerciseSessionRecord.EXERCISE_TYPE_CYCLING,
             ExerciseSessionRecord.EXERCISE_TYPE_BIKING,
             ExerciseSessionRecord.EXERCISE_TYPE_BIKING_STATIONARY,
             ExerciseSessionRecord.EXERCISE_TYPE_ROWING_MACHINE,
@@ -100,7 +99,6 @@ class HeartRateThresholdCalculator @Inject constructor() {
         return when (activityType) {
             ExerciseSessionRecord.EXERCISE_TYPE_RUNNING -> "Running"
             ExerciseSessionRecord.EXERCISE_TYPE_RUNNING_TREADMILL -> "Treadmill Running"
-            ExerciseSessionRecord.EXERCISE_TYPE_CYCLING -> "Cycling"
             ExerciseSessionRecord.EXERCISE_TYPE_BIKING -> "Biking"
             ExerciseSessionRecord.EXERCISE_TYPE_WALKING -> "Walking"
             ExerciseSessionRecord.EXERCISE_TYPE_SWIMMING_POOL -> "Swimming (Pool)"

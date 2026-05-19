@@ -1,6 +1,7 @@
 package com.ironcore.metrics.wear.data
 
 import android.content.Context
+import android.net.Uri
 import android.util.Log
 import com.google.android.gms.wearable.*
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -128,7 +129,7 @@ class WearDataSyncService @Inject constructor(
     suspend fun readHydration(): HydrationData? {
         return try {
             val dataItems = dataClient.getDataItems(
-                WearableUris.createUriWithHost(PATH_HYDRATION, "*")
+                Uri.parse("wear://*$PATH_HYDRATION")
             ).await()
             
             dataItems.firstOrNull()?.let { item ->
@@ -153,7 +154,7 @@ class WearDataSyncService @Inject constructor(
     suspend fun readRecovery(): RecoveryData? {
         return try {
             val dataItems = dataClient.getDataItems(
-                WearableUris.createUriWithHost(PATH_RECOVERY, "*")
+                Uri.parse("wear://*$PATH_RECOVERY")
             ).await()
             
             dataItems.firstOrNull()?.let { item ->

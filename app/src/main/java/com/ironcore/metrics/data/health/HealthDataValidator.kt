@@ -22,6 +22,11 @@ class HealthDataValidator @Inject constructor() {
         private const val MAX_DAILY_CALORIES = 10000.0
         private const val MIN_HYDRATION_ML = 0
         private const val MAX_HYDRATION_ML = 10000
+        private const val MAX_SLEEP_MINUTES = 1440L // 24 hours
+        private const val MIN_SPO2 = 50.0
+        private const val MAX_SPO2 = 100.0
+        private const val MIN_RESPIRATORY_RATE = 5.0
+        private const val MAX_RESPIRATORY_RATE = 60.0
     }
 
     /**
@@ -134,6 +139,30 @@ class HealthDataValidator @Inject constructor() {
                 Log.d(TAG, "Hydration $hydrationMl ml is valid")
                 hydrationMl
             }
+        }
+    }
+
+    fun validateSleep(sleepMinutes: Long): Long {
+        return when {
+            sleepMinutes < 0 -> 0L
+            sleepMinutes > MAX_SLEEP_MINUTES -> MAX_SLEEP_MINUTES
+            else -> sleepMinutes
+        }
+    }
+
+    fun validateSpO2(spO2: Double): Double {
+        return when {
+            spO2 < MIN_SPO2 -> 0.0
+            spO2 > MAX_SPO2 -> MAX_SPO2
+            else -> spO2
+        }
+    }
+
+    fun validateRespiratoryRate(rate: Double): Double {
+        return when {
+            rate < MIN_RESPIRATORY_RATE -> 0.0
+            rate > MAX_RESPIRATORY_RATE -> MAX_RESPIRATORY_RATE
+            else -> rate
         }
     }
 
