@@ -37,10 +37,20 @@
 ### 🏋️ Workout Architecture
 - **Surgical Tracking:** Detailed set/rep logging with historical volume analysis.
 - **Recovery Coaching:** Proactive suggestions on when to push and when to rest based on physiological markers.
+- **🎤 Voice Commands:** Hands-free workout logging with natural language processing ("log 10 reps", "add 50 pounds", "complete set")
 
 ### 🚨 Safety & Monitoring
 - **Vitals Monitor Worker:** Background WorkManager task (15-min intervals) monitoring for high-stress vitals (e.g., HR > 180 BPM).
 - **Emergency Notifications:** CarAppExtender-enabled alerts that pop up on vehicle displays during critical health events.
+- **🔔 Smart Notifications:** Context-aware reminders for hydration, workouts, and recovery based on time of day and activity patterns
+
+### 🔒 Security & Privacy
+- **🔐 Biometric Authentication:** Fingerprint/face unlock for sensitive features (health data, emergency SOS, settings)
+- **Privacy-First Architecture:** All health data stays on device and private network
+
+### 🎨 Personalization
+- **🌓 Theme Toggle:** Dark mode, light mode, and system default with dynamic color support (Android 12+)
+- **Adaptive UI:** Time-based background gradients and focus mode for distraction-free training
 
 ---
 
