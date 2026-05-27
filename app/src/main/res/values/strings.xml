@@ -1,3 +1,28 @@
 <resources>
     <string name="app_name">IronCore Metrics</string>
+    <string name="settings">Settings</string>
+    <string name="user_profile">User Profile</string>
+    <string name="name">Name</string>
+    <string name="age">Age</string>
+    <string name="weight">Weight</string>
+    <string name="height">Height</string>
+    <string name="save_profile">Save Profile</string>
+    <string name="dark_mode">Dark Mode</string>
+    <string name="offline_mode">Offline Mode</string>
+    <string name="ai_integrations">AI Integrations</string>
+    <string name="on_device_ai">On-Device AI (AICore)</string>
+    <string name="on_device_ai_desc">Use AICore for fast, local responses</string>
+    <string name="remote_ai">Remote AI (Ollama/Homelab)</string>
+    <string name="remote_ai_desc">Use Granite Code 3b model server</string>
+    <string name="media_integrations">Media Integrations</string>
+    <string name="connect_spotify">Connect Spotify</string>
+    <string name="connect_yt_music">Connect YouTube Music</string>
+    <string name="account">Account</string>
+    <string name="guest_user">Guest User</string>
+    <string name="sign_in_to_sync">Sign in to sync data</string>
+    <string name="sign_in">Sign In</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="unit_system">Unit System</string>
+    <string name="metric">Metric (kg, cm)</string>
+    <string name="imperial">Imperial (lb, in)</string>
 </resources>

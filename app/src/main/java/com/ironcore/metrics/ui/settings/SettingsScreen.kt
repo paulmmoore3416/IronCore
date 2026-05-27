@@ -5,18 +5,18 @@ import android.net.Uri
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.CloudOff
-import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.LibraryMusic
-import androidx.compose.material.icons.filled.Memory
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.ironcore.metrics.R
+import com.ironcore.metrics.data.auth.AuthState
+import com.ironcore.metrics.data.model.UnitSystem
 import com.ironcore.metrics.ui.components.IronCoreButton
 import com.ironcore.metrics.ui.components.IronCoreCard
 
@@ -26,6 +26,8 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     val userProfile by viewModel.userProfile.collectAsState()
+    val authState by viewModel.authState.collectAsState()
+    val unitSystem by viewModel.unitSystem.collectAsState()
 
     var isDarkModeEnabled by remember { mutableStateOf(true) }
     var isOfflineModeEnabled by remember { mutableStateOf(false) }
@@ -42,7 +44,7 @@ fun SettingsScreen(
             .padding(16.dp)
     ) {
         Text(
-            text = "Settings",
+            text = stringResource(R.string.settings),
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onBackground
         )
@@ -54,34 +56,36 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                Text("User Profile", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.user_profile), style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(8.dp))
                 IronCoreCard {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(
                             value = name,
                             onValueChange = { name = it },
-                            label = { Text("Name") },
+                            label = { Text(stringResource(R.string.name)) },
                             modifier = Modifier.fillMaxWidth()
                         )
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             OutlinedTextField(
                                 value = age,
                                 onValueChange = { age = it },
-                                label = { Text("Age") },
+                                label = { Text(stringResource(R.string.age)) },
                                 modifier = Modifier.weight(1f)
                             )
+                            val weightLabel = if (unitSystem == UnitSystem.METRIC) "Weight (kg)" else "Weight (lb)"
                             OutlinedTextField(
                                 value = weight,
                                 onValueChange = { weight = it },
-                                label = { Text("Weight (kg)") },
+                                label = { Text(weightLabel) },
                                 modifier = Modifier.weight(1f)
                             )
                         }
+                        val heightLabel = if (unitSystem == UnitSystem.METRIC) "Height (cm)" else "Height (in)"
                         OutlinedTextField(
                             value = height,
                             onValueChange = { height = it },
-                            label = { Text("Height (cm)") },
+                            label = { Text(heightLabel) },
                             modifier = Modifier.fillMaxWidth()
                         )
                         Button(
@@ -96,7 +100,7 @@ fun SettingsScreen(
                             },
                             modifier = Modifier.align(Alignment.End)
                         ) {
-                            Text("Save Profile")
+                            Text(stringResource(R.string.save_profile))
                         }
                     }
                 }
@@ -112,7 +116,7 @@ fun SettingsScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.DarkMode, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Dark Mode", style = MaterialTheme.typography.titleMedium)
+                            Text(stringResource(R.string.dark_mode), style = MaterialTheme.typography.titleMedium)
                         }
                         Switch(
                             checked = isDarkModeEnabled,
@@ -132,7 +136,7 @@ fun SettingsScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.CloudOff, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Offline Mode", style = MaterialTheme.typography.titleMedium)
+                            Text(stringResource(R.string.offline_mode), style = MaterialTheme.typography.titleMedium)
                         }
                         Switch(
                             checked = isOfflineModeEnabled,
@@ -143,7 +147,32 @@ fun SettingsScreen(
             }
 
             item {
-                Text("AI Integrations", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.unit_system), style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(8.dp))
+                IronCoreCard {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Settings, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = if (unitSystem == UnitSystem.METRIC) stringResource(R.string.metric) else stringResource(R.string.imperial),
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        }
+                        Switch(
+                            checked = unitSystem == UnitSystem.IMPERIAL,
+                            onCheckedChange = { viewModel.toggleUnitSystem() }
+                        )
+                    }
+                }
+            }
+
+            item {
+                Text(stringResource(R.string.ai_integrations), style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(8.dp))
                 IronCoreCard {
                     Column {
@@ -156,8 +185,8 @@ fun SettingsScreen(
                                 Icon(Icons.Default.Memory, contentDescription = null)
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Column {
-                                    Text("On-Device AI (AICore)", style = MaterialTheme.typography.titleMedium)
-                                    Text("Use AICore for fast, local responses", style = MaterialTheme.typography.bodySmall)
+                                    Text(stringResource(R.string.on_device_ai), style = MaterialTheme.typography.titleMedium)
+                                    Text(stringResource(R.string.on_device_ai_desc), style = MaterialTheme.typography.bodySmall)
                                 }
                             }
                             Switch(
@@ -175,8 +204,8 @@ fun SettingsScreen(
                                 Icon(Icons.Default.Memory, contentDescription = null)
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Column {
-                                    Text("Remote AI (Ollama/Homelab)", style = MaterialTheme.typography.titleMedium)
-                                    Text("Use Granite Code 3b model server", style = MaterialTheme.typography.bodySmall)
+                                    Text(stringResource(R.string.remote_ai), style = MaterialTheme.typography.titleMedium)
+                                    Text(stringResource(R.string.remote_ai_desc), style = MaterialTheme.typography.bodySmall)
                                 }
                             }
                             Switch(
@@ -189,52 +218,46 @@ fun SettingsScreen(
             }
 
             item {
-                Text("Media Integrations", style = MaterialTheme.typography.titleMedium)
-                Spacer(modifier = Modifier.height(8.dp))
-                IronCoreCard {
-                    Column {
-                        IronCoreButton(
-                            onClick = { 
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://spotify.com/login"))
-                                context.startActivity(intent)
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(Icons.Default.LibraryMusic, contentDescription = null)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Connect Spotify")
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        IronCoreButton(
-                            onClick = { 
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://music.youtube.com/login"))
-                                context.startActivity(intent)
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(Icons.Default.LibraryMusic, contentDescription = null)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Connect YouTube Music")
-                        }
-                    }
-                }
-            }
-
-            item {
-                Text("Account", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.account), style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(8.dp))
                 IronCoreCard {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.AccountCircle, contentDescription = null, modifier = Modifier.size(40.dp))
+                        Icon(
+                            imageVector = Icons.Default.AccountCircle,
+                            contentDescription = null,
+                            modifier = Modifier.size(40.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
-                            Text("Guest User", style = MaterialTheme.typography.titleMedium)
-                            Text("Sign in to sync data", style = MaterialTheme.typography.bodyMedium)
+                            val nameText = when (val state = authState) {
+                                is AuthState.LoggedIn -> state.name
+                                AuthState.LoggedOut -> stringResource(R.string.guest_user)
+                            }
+                            val subtext = when (val state = authState) {
+                                is AuthState.LoggedIn -> state.email
+                                AuthState.LoggedOut -> stringResource(R.string.sign_in_to_sync)
+                            }
+                            Text(nameText, style = MaterialTheme.typography.titleMedium)
+                            Text(subtext, style = MaterialTheme.typography.bodyMedium)
                         }
                     }
                     Spacer(modifier = Modifier.height(16.dp))
-                    IronCoreButton(onClick = { /* TODO */ }, modifier = Modifier.fillMaxWidth()) {
-                        Text("Sign In")
+                    
+                    if (authState is AuthState.LoggedOut) {
+                        IronCoreButton(
+                            onClick = { viewModel.signIn() },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(stringResource(R.string.sign_in))
+                        }
+                    } else {
+                        IronCoreButton(
+                            onClick = { viewModel.signOut() },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(stringResource(R.string.sign_out))
+                        }
                     }
                 }
             }

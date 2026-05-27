@@ -38,12 +38,14 @@ class RecoveryAdvisorService @Inject constructor(
         hydrationMl: Int,
         activeCalories: Double,
         consumedCalories: Int,
-        recoveryScore: Int
+        recoveryScore: Int,
+        sleepStages: com.ironcore.metrics.data.health.SleepStages? = null
     ): RecoveryAdvice? = withContext(Dispatchers.IO) {
         try {
             val prompt = buildPrompt(
                 steps, heartRate, hydrationMl, 
-                activeCalories, consumedCalories, recoveryScore
+                activeCalories, consumedCalories, recoveryScore,
+                sleepStages
             )
             
             Log.d(TAG, "Requesting recovery advice from AI model")
@@ -76,58 +78,73 @@ class RecoveryAdvisorService @Inject constructor(
         hydrationMl: Int,
         activeCalories: Double,
         consumedCalories: Int,
-        recoveryScore: Int
+        recoveryScore: Int,
+        sleepStages: com.ironcore.metrics.data.health.SleepStages? = null
     ): String {
         return """
-You are a fitness recovery advisor. Analyze the following user metrics and provide personalized recovery advice.
+[System Instructions]
+You are a high-performance fitness recovery advisor for the IronCore Metrics ecosystem. 
+Your goal is to provide precise, actionable, and data-driven recovery advice.
+Respond ONLY with a valid JSON object. Do not include any preamble or postamble.
 
-User Metrics:
-- Steps: $steps
-- Heart Rate: $heartRate BPM
+[User Metrics]
+- Steps: ${if (steps > 0) steps else "No data"}
+- Heart Rate: ${if (heartRate > 0) "$heartRate BPM" else "No data"}
 - Hydration: $hydrationMl ml (target: 2000 ml)
-- Active Calories Burned: ${activeCalories.toInt()} kcal
-- Calories Consumed: $consumedCalories kcal
+- Active Calories Burned: ${if (activeCalories > 0) "${activeCalories.toInt()} kcal" else "No data"}
+- Calories Consumed: ${if (consumedCalories > 0) "$consumedCalories kcal" else "No data"}
 - Recovery Score: $recoveryScore/100
+- Sleep Quality: ${if (sleepStages != null) "Deep: ${sleepStages.deepMinutes}m, REM: ${sleepStages.remMinutes}m, Light: ${sleepStages.lightMinutes}m" else "No data"}
 
-Provide your response in the following JSON format:
+[Constraints]
+1. If steps are 0, suggest light movement to stimulate recovery.
+2. If HR is missing, focus advice on hydration and perceived exertion.
+3. If hydration is < 1500ml, prioritize water intake.
+4. If calorie balance is negative, suggest nutrient-dense snacks.
+5. If deep sleep is < 60m, emphasize rest and possible overtraining.
+6. Keep advice professional, direct, and under 50 words.
+
+[Response Format]
 {
-  "advice": "Brief, actionable recovery advice (2-3 sentences)",
+  "advice": "Main advice text",
   "priority": "high|medium|low",
-  "recommendations": [
-    "Specific recommendation 1",
-    "Specific recommendation 2",
-    "Specific recommendation 3"
-  ]
+  "recommendations": ["Rec 1", "Rec 2", "Rec 3"]
 }
-
-Focus on:
-1. Hydration status and recommendations
-2. Energy balance (calories in vs out)
-3. Activity level and rest needs
-4. Heart rate recovery
-
-Keep advice practical, encouraging, and specific to the metrics provided.
         """.trimIndent()
     }
 
     /**
      * Parses the AI response into a RecoveryAdvice object.
+     * Extracts JSON from potential markdown blocks.
      */
-    private fun parseRecoveryAdvice(jsonResponse: String): RecoveryAdvice? {
+    private fun parseRecoveryAdvice(response: String): RecoveryAdvice? {
         return try {
-            val json = JSONObject(jsonResponse)
+            // Extract JSON if AI wraps it in markdown blocks
+            val jsonString = if (response.contains("```json")) {
+                response.substringAfter("```json").substringBefore("```")
+            } else if (response.contains("```")) {
+                response.substringAfter("```").substringBefore("```")
+            } else {
+                response
+            }.trim()
+
+            val json = JSONObject(jsonString)
             RecoveryAdvice(
-                advice = json.getString("advice"),
-                priority = json.getString("priority"),
+                advice = json.optString("advice", "Recovery data processed."),
+                priority = json.optString("priority", "medium"),
                 recommendations = buildList {
-                    val recsArray = json.getJSONArray("recommendations")
-                    for (i in 0 until recsArray.length()) {
-                        add(recsArray.getString(i))
+                    val recsArray = json.optJSONArray("recommendations")
+                    if (recsArray != null) {
+                        for (i in 0 until recsArray.length()) {
+                            add(recsArray.getString(i))
+                        }
+                    } else {
+                        add("Continue monitoring your vitals.")
                     }
                 }
             )
         } catch (e: Exception) {
-            Log.e(TAG, "Error parsing AI response", e)
+            Log.e(TAG, "Error parsing AI response: $response", e)
             null
         }
     }

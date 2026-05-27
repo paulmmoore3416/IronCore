@@ -43,14 +43,12 @@ fun IronCoreNavGraph(navController: NavHostController) {
         composable(Screen.Dashboard.route) {
             DashboardScreen(
                 onMetricClick = { type ->
-                    if (type == "hydration") {
-                        navController.navigate(Screen.HydrationLogging.route)
-                    } else if (type == "social") {
-                        navController.navigate(Screen.SocialRoom.route)
-                    } else if (type == "ar") {
-                        navController.navigate(Screen.ARBodyProgress.route)
-                    } else {
-                        navController.navigate(Screen.MetricDetail.createRoute(type))
+                    when (type) {
+                        "hydration" -> navController.navigate(Screen.HydrationLogging.route)
+                        // Social and AR are disabled for Phase 1 (Production Readiness)
+                        // "social" -> navController.navigate(Screen.SocialRoom.route)
+                        // "ar" -> navController.navigate(Screen.ARBodyProgress.route)
+                        else -> navController.navigate(Screen.MetricDetail.createRoute(type))
                     }
                 }
             )

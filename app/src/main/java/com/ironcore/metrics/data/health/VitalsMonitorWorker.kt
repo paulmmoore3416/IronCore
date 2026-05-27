@@ -90,9 +90,15 @@ class VitalsMonitorWorker(
         private const val WORK_NAME = "VitalsMonitorWork"
 
         fun enqueue(context: Context) {
+            val constraints = androidx.work.Constraints.Builder()
+                .setRequiresBatteryNotLow(true)
+                .build()
+
             val workRequest = PeriodicWorkRequestBuilder<VitalsMonitorWorker>(
                 15, TimeUnit.MINUTES // Minimum periodic interval allowed by WorkManager
-            ).build()
+            )
+                .setConstraints(constraints)
+                .build()
 
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 WORK_NAME,

@@ -19,8 +19,13 @@ import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
+import android.app.Application
+import android.content.Intent
+import com.ironcore.metrics.data.health.IronCoreVitalsService
+
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
+    private val application: Application,
     private val healthConnectManager: HealthConnectManager,
     private val nutritionDao: NutritionDao,
     private val recoveryAdvisorService: RecoveryAdvisorService,
@@ -76,7 +81,7 @@ class DashboardViewModel @Inject constructor(
     val isAuthenticated = _isAuthenticated.asStateFlow()
 
     // Hydration Target
-    val hydrationTarget = 2500 // Enhanced goal
+    val hydrationTarget = 2000
 
     init {
         // Simulation of real-time data updates
@@ -112,6 +117,20 @@ class DashboardViewModel @Inject constructor(
 
     fun toggleFocusMode() {
         _isFocusMode.value = !_isFocusMode.value
+        
+        val intent = Intent(application, IronCoreVitalsService::class.java).apply {
+            action = if (_isFocusMode.value) {
+                IronCoreVitalsService.ACTION_START_MONITORING
+            } else {
+                IronCoreVitalsService.ACTION_STOP_MONITORING
+            }
+        }
+        
+        if (_isFocusMode.value) {
+            application.startForegroundService(intent)
+        } else {
+            application.startService(intent)
+        }
     }
 
     fun setAuthenticated(authenticated: Boolean) {
@@ -158,7 +177,7 @@ class DashboardViewModel @Inject constructor(
                 if (validatedAmount > 0) {
                     nutritionDao.insertHydration(HydrationLog(amountMl = validatedAmount))
                     // Sync updated hydration to Wear OS
-                    wearDataSyncService.syncHydration(_hydrationMl.value + validatedAmount, 2000)
+                    wearDataSyncService.syncHydration(_hydrationMl.value + validatedAmount, hydrationTarget)
                     Log.d(TAG, "Added $validatedAmount ml hydration")
                 } else {
                     Log.w(TAG, "Invalid hydration amount: $amount ml")
@@ -178,13 +197,18 @@ class DashboardViewModel @Inject constructor(
                 _isLoadingAdvice.value = true
                 Log.d(TAG, "Fetching AI recovery advice...")
                 
+                val endTime = Instant.now()
+                val startTime = endTime.minus(24, ChronoUnit.HOURS)
+                val sleepStages = healthConnectManager.readSleepStages(startTime, endTime)
+                
                 val advice = recoveryAdvisorService.getRecoveryAdvice(
                     steps = _steps.value,
                     heartRate = _heartRate.value,
                     hydrationMl = _hydrationMl.value,
                     activeCalories = _activeCaloriesBurned.value,
                     consumedCalories = _consumedCalories.value,
-                    recoveryScore = recoveryScore.value
+                    recoveryScore = recoveryScore.value,
+                    sleepStages = sleepStages
                 )
                 
                 _recoveryAdvice.value = advice

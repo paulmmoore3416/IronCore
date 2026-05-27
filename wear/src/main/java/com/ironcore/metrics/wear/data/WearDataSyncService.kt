@@ -26,6 +26,7 @@ class WearDataSyncService @Inject constructor(
         private const val PATH_HEART_RATE = "/ironcore/heartrate"
         private const val PATH_STEPS = "/ironcore/steps"
         private const val PATH_CALORIES = "/ironcore/calories"
+        private const val PATH_LOG_HYDRATION = "/ironcore/log_hydration"
         
         // Data keys
         private const val KEY_HYDRATION_ML = "hydration_ml"
@@ -41,6 +42,44 @@ class WearDataSyncService @Inject constructor(
 
     private val dataClient: DataClient by lazy {
         Wearable.getDataClient(context)
+    }
+
+    private val messageClient: MessageClient by lazy {
+        Wearable.getMessageClient(context)
+    }
+
+    private val capabilityClient: CapabilityClient by lazy {
+        Wearable.getCapabilityClient(context)
+    }
+
+    /**
+     * Logs hydration and sends a message to the phone to update its database.
+     */
+    suspend fun logHydrationToPhone(amountMl: Int): Boolean {
+        return try {
+            val nodes = capabilityClient.getCapability(
+                "ironcore_phone_app",
+                CapabilityClient.FILTER_REACHABLE
+            ).await().nodes
+
+            if (nodes.isEmpty()) {
+                Log.w(TAG, "No reachable phone nodes found to log hydration")
+                return false
+            }
+
+            nodes.forEach { node ->
+                messageClient.sendMessage(
+                    node.id,
+                    PATH_LOG_HYDRATION,
+                    amountMl.toString().toByteArray()
+                ).await()
+            }
+            Log.d(TAG, "Sent hydration log ($amountMl ml) to phone")
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error sending hydration log to phone", e)
+            false
+        }
     }
 
     /**

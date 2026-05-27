@@ -3,15 +3,7 @@ package com.ironcore.metrics.data.health
 import android.content.Context
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
-import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
-import androidx.health.connect.client.records.ExerciseSessionRecord
-import androidx.health.connect.client.records.HeartRateRecord
-import androidx.health.connect.client.records.StepsRecord
-import androidx.health.connect.client.records.WeightRecord
-import androidx.health.connect.client.records.SleepSessionRecord
-import androidx.health.connect.client.records.HydrationRecord
-import androidx.health.connect.client.records.OxygenSaturationRecord
-import androidx.health.connect.client.records.RespiratoryRateRecord
+import androidx.health.connect.client.records.*
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -111,6 +103,33 @@ class HealthConnectManager @Inject constructor(
         return response.records.sumOf { java.time.Duration.between(it.startTime, it.endTime).toMinutes() }
     }
 
+    suspend fun readSleepStages(startTime: Instant, endTime: Instant): SleepStages {
+        if (!hasAllPermissions()) return SleepStages(0, 0, 0)
+        val response = healthConnectClient.readRecords(
+            ReadRecordsRequest(
+                recordType = SleepSessionRecord::class,
+                timeRangeFilter = TimeRangeFilter.between(startTime, endTime)
+            )
+        )
+        
+        var deepSleep = 0L
+        var remSleep = 0L
+        var lightSleep = 0L
+        
+        response.records.forEach { session ->
+            session.stages.forEach { stage ->
+                val duration = java.time.Duration.between(stage.startTime, stage.endTime).toMinutes()
+                when (stage.stage) {
+                    SleepSessionRecord.STAGE_TYPE_DEEP -> deepSleep += duration
+                    SleepSessionRecord.STAGE_TYPE_REM -> remSleep += duration
+                    SleepSessionRecord.STAGE_TYPE_LIGHT -> lightSleep += duration
+                }
+            }
+        }
+        
+        return SleepStages(deepSleep, remSleep, lightSleep)
+    }
+
     suspend fun readLatestOxygenSaturation(startTime: Instant, endTime: Instant): Double {
         if (!hasAllPermissions()) return 0.0
         val response = healthConnectClient.readRecords(
@@ -154,3 +173,8 @@ class HealthConnectManager @Inject constructor(
     }
 }
 
+data class SleepStages(
+    val deepMinutes: Long,
+    val remMinutes: Long,
+    val lightMinutes: Long
+)

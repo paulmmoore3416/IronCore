@@ -10,6 +10,9 @@ interface WorkoutDao {
     @Query("SELECT * FROM workouts ORDER BY timestamp DESC")
     fun getAllWorkouts(): Flow<List<Workout>>
 
+    @Query("SELECT * FROM workouts WHERE timestamp >= :since ORDER BY timestamp DESC")
+    suspend fun getWorkoutsSince(since: Long): List<Workout>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertWorkout(workout: Workout): Long
 

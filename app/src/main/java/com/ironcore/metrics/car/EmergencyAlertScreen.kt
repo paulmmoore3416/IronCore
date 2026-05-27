@@ -1,11 +1,14 @@
 package com.ironcore.metrics.car
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.util.Log
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
 import androidx.car.app.model.*
+import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.IconCompat
 import com.ironcore.metrics.R
 
@@ -43,24 +46,31 @@ class EmergencyAlertScreen(carContext: CarContext) : Screen(carContext) {
     }
     
     /**
-     * Initiates an emergency call using ACTION_DIAL intent.
-     * Uses ACTION_DIAL instead of ACTION_CALL to give user final confirmation.
+     * Initiates an emergency call.
+     * Uses ACTION_CALL for instant dialing if permission is granted,
+     * otherwise falls back to ACTION_DIAL.
      */
     private fun initiateEmergencyCall() {
         try {
             Log.w(TAG, "Initiating emergency call to $EMERGENCY_NUMBER")
             
-            val dialIntent = Intent(Intent.ACTION_DIAL).apply {
+            val hasCallPermission = ContextCompat.checkSelfPermission(
+                carContext,
+                Manifest.permission.CALL_PHONE
+            ) == PackageManager.PERMISSION_GRANTED
+
+            val action = if (hasCallPermission) Intent.ACTION_CALL else Intent.ACTION_DIAL
+            
+            val callIntent = Intent(action).apply {
                 data = Uri.parse("tel:$EMERGENCY_NUMBER")
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
             }
             
-            carContext.startActivity(dialIntent)
+            carContext.startActivity(callIntent)
             
-            Log.i(TAG, "Emergency dialer launched successfully")
+            Log.i(TAG, "Emergency call initiated with action: $action")
         } catch (e: Exception) {
-            Log.e(TAG, "Error launching emergency dialer", e)
-            // Screen will remain visible so user can try again or dismiss
+            Log.e(TAG, "Error initiating emergency call", e)
         }
     }
 }
