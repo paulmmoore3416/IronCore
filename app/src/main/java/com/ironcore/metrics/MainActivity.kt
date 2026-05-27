@@ -131,14 +131,16 @@ class MainActivity : FragmentActivity() {
         // Store callback to trigger after permissions are granted
         onPermissionsGrantedCallback = onGranted
         
-        // First request Health Connect permissions
+        // Request Health Connect permissions - this opens Health Connect app
         requestHealthConnectPermissionLauncher.launch(healthConnectManager.permissions)
         
-        // Then request runtime permissions
-        val missingPermissions = permissionManager.getMissingPermissions()
-        if (missingPermissions.isNotEmpty()) {
-            requestMultiplePermissionsLauncher.launch(missingPermissions.toTypedArray())
-        }
+        // Request runtime permissions after a short delay to avoid overwhelming user
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            val missingPermissions = permissionManager.getMissingPermissions()
+            if (missingPermissions.isNotEmpty()) {
+                requestMultiplePermissionsLauncher.launch(missingPermissions.toTypedArray())
+            }
+        }, 1000)
     }
 }
 

@@ -41,7 +41,18 @@ class HealthConnectManager @Inject constructor(
 
     suspend fun hasAllPermissions(): Boolean {
         val granted = healthConnectClient.permissionController.getGrantedPermissions()
-        return granted.containsAll(permissions)
+        val hasAll = granted.containsAll(permissions)
+        
+        android.util.Log.d("HealthConnectManager", "Requested permissions: ${permissions.size}")
+        android.util.Log.d("HealthConnectManager", "Granted permissions: ${granted.size}")
+        android.util.Log.d("HealthConnectManager", "Has all permissions: $hasAll")
+        
+        if (!hasAll) {
+            val missing = permissions.filter { !granted.contains(it) }
+            android.util.Log.w("HealthConnectManager", "Missing permissions: $missing")
+        }
+        
+        return hasAll
     }
 
     fun isAvailable(): Boolean {

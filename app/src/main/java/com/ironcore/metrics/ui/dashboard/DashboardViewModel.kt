@@ -160,12 +160,20 @@ class DashboardViewModel @Inject constructor(
 
     fun checkPermissionsAndFetchData() {
         viewModelScope.launch {
-            if (healthConnectManager.isAvailable() && healthConnectManager.hasAllPermissions()) {
+            val isAvailable = healthConnectManager.isAvailable()
+            val hasPermissions = healthConnectManager.hasAllPermissions()
+            
+            Log.d(TAG, "Health Connect available: $isAvailable")
+            Log.d(TAG, "Has all permissions: $hasPermissions")
+            
+            if (isAvailable && hasPermissions) {
                 _permissionsGranted.value = true
+                Log.d(TAG, "Permissions granted, fetching health data...")
                 fetchHealthData()
                 fetchNutritionData()
             } else {
                 _permissionsGranted.value = false
+                Log.w(TAG, "Permissions not granted or Health Connect unavailable")
             }
         }
     }
