@@ -88,7 +88,7 @@ fun DashboardScreen(
             )
 
             if (!permissionsGranted) {
-                PermissionWarning(context = context)
+                PermissionWarning(context = context, viewModel = viewModel)
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -378,7 +378,7 @@ fun HeaderSection(
 }
 
 @Composable
-fun PermissionWarning(context: android.content.Context) {
+fun PermissionWarning(context: android.content.Context, viewModel: DashboardViewModel) {
     Spacer(modifier = Modifier.height(16.dp))
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
@@ -404,7 +404,10 @@ fun PermissionWarning(context: android.content.Context) {
                         }
                         ctx = ctx.baseContext
                     }
-                    (ctx as? MainActivity)?.requestPermissions()
+                    (ctx as? MainActivity)?.requestPermissions {
+                        // Callback: refresh data after permissions are granted
+                        viewModel.checkPermissionsAndFetchData()
+                    }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
             ) {

@@ -41,11 +41,14 @@ class MainActivity : FragmentActivity() {
     @Inject
     lateinit var permissionManager: PermissionManager
 
+    private var onPermissionsGrantedCallback: (() -> Unit)? = null
+    
     private val requestHealthConnectPermissionLauncher = registerForActivityResult(
         PermissionController.createRequestPermissionResultContract()
     ) { granted ->
         if (granted.containsAll(healthConnectManager.permissions)) {
-            // Health Connect permissions granted, refresh app data
+            // Health Connect permissions granted, trigger callback to refresh UI
+            onPermissionsGrantedCallback?.invoke()
         }
     }
     
@@ -54,11 +57,13 @@ class MainActivity : FragmentActivity() {
     ) { permissions ->
         val allGranted = permissions.values.all { it }
         if (allGranted) {
-            // All runtime permissions granted
+            // All runtime permissions granted, trigger callback to refresh UI
+            onPermissionsGrantedCallback?.invoke()
         } else {
             // Some permissions denied - app will still work with reduced functionality
             val deniedPermissions = permissions.filterValues { !it }.keys
-            // Log or show message about denied permissions
+            // Still trigger callback to update UI with current permission state
+            onPermissionsGrantedCallback?.invoke()
         }
     }
 
@@ -122,7 +127,10 @@ class MainActivity : FragmentActivity() {
         }
     }
 
-    fun requestPermissions() {
+    fun requestPermissions(onGranted: (() -> Unit)? = null) {
+        // Store callback to trigger after permissions are granted
+        onPermissionsGrantedCallback = onGranted
+        
         // First request Health Connect permissions
         requestHealthConnectPermissionLauncher.launch(healthConnectManager.permissions)
         
