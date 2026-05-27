@@ -1,6 +1,7 @@
 package com.ironcore.metrics
 
 import android.os.Bundle
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
@@ -23,6 +24,7 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.ironcore.metrics.data.auth.PermissionManager
 import com.ironcore.metrics.data.health.HealthConnectManager
 import com.ironcore.metrics.ui.navigation.IronCoreNavGraph
 import com.ironcore.metrics.ui.navigation.Screen
@@ -35,12 +37,28 @@ class MainActivity : FragmentActivity() {
 
     @Inject
     lateinit var healthConnectManager: HealthConnectManager
+    
+    @Inject
+    lateinit var permissionManager: PermissionManager
 
-    private val requestPermissionLauncher = registerForActivityResult(
+    private val requestHealthConnectPermissionLauncher = registerForActivityResult(
         PermissionController.createRequestPermissionResultContract()
     ) { granted ->
         if (granted.containsAll(healthConnectManager.permissions)) {
-            // Permissions granted, refresh app data
+            // Health Connect permissions granted, refresh app data
+        }
+    }
+    
+    private val requestMultiplePermissionsLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val allGranted = permissions.values.all { it }
+        if (allGranted) {
+            // All runtime permissions granted
+        } else {
+            // Some permissions denied - app will still work with reduced functionality
+            val deniedPermissions = permissions.filterValues { !it }.keys
+            // Log or show message about denied permissions
         }
     }
 
@@ -105,7 +123,14 @@ class MainActivity : FragmentActivity() {
     }
 
     fun requestPermissions() {
-        requestPermissionLauncher.launch(healthConnectManager.permissions)
+        // First request Health Connect permissions
+        requestHealthConnectPermissionLauncher.launch(healthConnectManager.permissions)
+        
+        // Then request runtime permissions
+        val missingPermissions = permissionManager.getMissingPermissions()
+        if (missingPermissions.isNotEmpty()) {
+            requestMultiplePermissionsLauncher.launch(missingPermissions.toTypedArray())
+        }
     }
 }
 
