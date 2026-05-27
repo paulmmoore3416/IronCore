@@ -1,5 +1,9 @@
 # 🛡️ IronCore Metrics
 
+<p align="center">
+  <img src="logo.jpg" width="200" alt="IronCore Metrics Logo">
+</p>
+
 [![Platform](https://img.shields.io/badge/Platform-Android-green.svg)](https://developer.android.com/about/versions/15)
 [![Hardware](https://img.shields.io/badge/Target-Pixel%2010%20Pro%20XL-blue.svg)](https://store.google.com/product/pixel_10_pro)
 [![Wear OS](https://img.shields.io/badge/Companion-Wear%20OS-orange.svg)](https://developer.android.com/wear)
