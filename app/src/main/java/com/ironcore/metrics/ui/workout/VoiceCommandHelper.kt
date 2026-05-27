@@ -6,152 +6,215 @@ import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
+import android.speech.tts.TextToSpeech
+import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import java.util.Locale
 
 /**
- * Enhancement 1: Voice Command Integration
- * Enables hands-free workout logging via voice commands
- * Commands: "log 10 reps", "add 50 pounds", "complete set"
+ * Helper class for voice command workout logging
+ * Handles speech recognition and text-to-speech feedback
  */
-class VoiceCommandHelper(private val context: Context) {
-    
-    private val _isListening = MutableStateFlow(false)
-    val isListening: StateFlow<Boolean> = _isListening.asStateFlow()
-    
-    private val _recognizedText = MutableStateFlow("")
-    val recognizedText: StateFlow<String> = _recognizedText.asStateFlow()
-    
+class VoiceCommandHelper(
+    private val context: Context,
+    private val onCommandParsed: (VoiceCommand) -> Unit
+) {
     private var speechRecognizer: SpeechRecognizer? = null
-    private var onCommandRecognized: ((VoiceCommand) -> Unit)? = null
-    
+    private var textToSpeech: TextToSpeech? = null
+    private var isTextToSpeechReady = false
+
+    private val _isListening = MutableStateFlow(false)
+    val isListening: StateFlow<Boolean> = _isListening
+
+    private val _lastRecognizedText = MutableStateFlow("")
+    val lastRecognizedText: StateFlow<String> = _lastRecognizedText
+
     init {
+        initializeSpeechRecognizer()
+        initializeTextToSpeech()
+    }
+
+    private fun initializeSpeechRecognizer() {
         if (SpeechRecognizer.isRecognitionAvailable(context)) {
-            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context)
+            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context).apply {
+                setRecognitionListener(object : RecognitionListener {
+                    override fun onReadyForSpeech(params: Bundle?) {
+                        _isListening.value = true
+                        Log.d(TAG, "Ready for speech")
+                    }
+
+                    override fun onBeginningOfSpeech() {
+                        Log.d(TAG, "Speech started")
+                    }
+
+                    override fun onRmsChanged(rmsdB: Float) {}
+
+                    override fun onBufferReceived(buffer: ByteArray?) {}
+
+                    override fun onEndOfSpeech() {
+                        _isListening.value = false
+                        Log.d(TAG, "Speech ended")
+                    }
+
+                    override fun onError(error: Int) {
+                        _isListening.value = false
+                        val errorMessage = when (error) {
+                            SpeechRecognizer.ERROR_AUDIO -> "Audio recording error"
+                            SpeechRecognizer.ERROR_CLIENT -> "Client side error"
+                            SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Insufficient permissions"
+                            SpeechRecognizer.ERROR_NETWORK -> "Network error"
+                            SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "Network timeout"
+                            SpeechRecognizer.ERROR_NO_MATCH -> "No speech match"
+                            SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "Recognition service busy"
+                            SpeechRecognizer.ERROR_SERVER -> "Server error"
+                            SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "No speech input"
+                            else -> "Unknown error"
+                        }
+                        Log.e(TAG, "Speech recognition error: $errorMessage")
+                        speak("Sorry, I didn't catch that. Please try again.")
+                    }
+
+                    override fun onResults(results: Bundle?) {
+                        _isListening.value = false
+                        val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                        if (!matches.isNullOrEmpty()) {
+                            val recognizedText = matches[0]
+                            _lastRecognizedText.value = recognizedText
+                            Log.d(TAG, "Recognized: $recognizedText")
+                            parseCommand(recognizedText)
+                        }
+                    }
+
+                    override fun onPartialResults(partialResults: Bundle?) {}
+
+                    override fun onEvent(eventType: Int, params: Bundle?) {}
+                })
+            }
+        } else {
+            Log.e(TAG, "Speech recognition not available on this device")
         }
     }
-    
-    fun startListening(onCommand: (VoiceCommand) -> Unit) {
-        if (!SpeechRecognizer.isRecognitionAvailable(context)) {
+
+    private fun initializeTextToSpeech() {
+        textToSpeech = TextToSpeech(context) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                val result = textToSpeech?.setLanguage(Locale.US)
+                isTextToSpeechReady = result != TextToSpeech.LANG_MISSING_DATA && 
+                                     result != TextToSpeech.LANG_NOT_SUPPORTED
+                if (isTextToSpeechReady) {
+                    Log.d(TAG, "TextToSpeech initialized successfully")
+                } else {
+                    Log.e(TAG, "TextToSpeech language not supported")
+                }
+            } else {
+                Log.e(TAG, "TextToSpeech initialization failed")
+            }
+        }
+    }
+
+    fun startListening() {
+        if (_isListening.value) {
+            Log.w(TAG, "Already listening")
             return
         }
-        
-        onCommandRecognized = onCommand
-        
+
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US")
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.US)
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
         }
-        
-        speechRecognizer?.setRecognitionListener(object : RecognitionListener {
-            override fun onReadyForSpeech(params: Bundle?) {
-                _isListening.value = true
-            }
-            
-            override fun onBeginningOfSpeech() {}
-            
-            override fun onRmsChanged(rmsdB: Float) {}
-            
-            override fun onBufferReceived(buffer: ByteArray?) {}
-            
-            override fun onEndOfSpeech() {
-                _isListening.value = false
-            }
-            
-            override fun onError(error: Int) {
-                _isListening.value = false
-            }
-            
-            override fun onResults(results: Bundle?) {
-                val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                if (!matches.isNullOrEmpty()) {
-                    val text = matches[0]
-                    _recognizedText.value = text
-                    parseCommand(text)?.let { command ->
-                        onCommandRecognized?.invoke(command)
-                    }
-                }
-                _isListening.value = false
-            }
-            
-            override fun onPartialResults(partialResults: Bundle?) {
-                val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                if (!matches.isNullOrEmpty()) {
-                    _recognizedText.value = matches[0]
-                }
-            }
-            
-            override fun onEvent(eventType: Int, params: Bundle?) {}
-        })
-        
-        speechRecognizer?.startListening(intent)
+
+        try {
+            speechRecognizer?.startListening(intent)
+            speak("Listening")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error starting speech recognition", e)
+            _isListening.value = false
+        }
     }
-    
+
     fun stopListening() {
         speechRecognizer?.stopListening()
         _isListening.value = false
     }
-    
-    private fun parseCommand(text: String): VoiceCommand? {
+
+    private fun parseCommand(text: String) {
         val lowerText = text.lowercase()
         
-        // Parse "log X reps" or "X reps"
-        val repsPattern = Regex("""(\d+)\s*reps?""")
-        repsPattern.find(lowerText)?.let { match ->
-            val reps = match.groupValues[1].toIntOrNull()
-            if (reps != null) {
-                return VoiceCommand.LogReps(reps)
-            }
+        // Pattern: "log X reps at Y pounds/kg RPE Z"
+        // Examples:
+        // - "log 10 reps at 225 pounds RPE 8"
+        // - "log 12 reps at 100 kilograms RPE 7"
+        // - "log 8 reps 315 pounds"
+        
+        val repsPattern = Regex("""(\d+)\s*(?:reps?|repetitions?)""")
+        val weightPattern = Regex("""(\d+(?:\.\d+)?)\s*(?:pounds?|lbs?|kilograms?|kgs?|kg)""")
+        val rpePattern = Regex("""rpe\s*(\d+)""")
+        
+        val repsMatch = repsPattern.find(lowerText)
+        val weightMatch = weightPattern.find(lowerText)
+        val rpeMatch = rpePattern.find(lowerText)
+        
+        val reps = repsMatch?.groupValues?.get(1)?.toIntOrNull()
+        val weightStr = weightMatch?.groupValues?.get(1)?.toFloatOrNull()
+        val rpe = rpeMatch?.groupValues?.get(1)?.toIntOrNull()
+        
+        // Convert pounds to kg if needed
+        val weight = if (weightStr != null && lowerText.contains(Regex("""pounds?|lbs?"""))) {
+            weightStr * 0.453592f // Convert lbs to kg
+        } else {
+            weightStr
         }
         
-        // Parse "add X pounds/kilos" or "X pounds/kilos"
-        val weightPattern = Regex("""(\d+)\s*(pounds?|kilos?|kg|lbs?)""")
-        weightPattern.find(lowerText)?.let { match ->
-            val weight = match.groupValues[1].toDoubleOrNull()
-            val unit = match.groupValues[2]
-            if (weight != null) {
-                val weightInKg = if (unit.startsWith("p") || unit.startsWith("lb")) {
-                    weight * 0.453592 // Convert pounds to kg
-                } else {
-                    weight
+        if (reps != null && weight != null) {
+            val command = VoiceCommand(
+                reps = reps,
+                weight = weight,
+                rpe = rpe,
+                rawText = text
+            )
+            
+            val confirmation = buildString {
+                append("Logged $reps reps at ${weight.toInt()} kilograms")
+                if (rpe != null) {
+                    append(" RPE $rpe")
                 }
-                return VoiceCommand.SetWeight(weightInKg)
             }
+            
+            speak(confirmation)
+            onCommandParsed(command)
+        } else {
+            speak("I couldn't understand that. Please say something like: log 10 reps at 225 pounds RPE 8")
         }
-        
-        // Parse "complete set" or "finish set"
-        if (lowerText.contains("complete") || lowerText.contains("finish")) {
-            if (lowerText.contains("set")) {
-                return VoiceCommand.CompleteSet
-            }
-        }
-        
-        // Parse "start workout" or "begin workout"
-        if ((lowerText.contains("start") || lowerText.contains("begin")) && lowerText.contains("workout")) {
-            return VoiceCommand.StartWorkout
-        }
-        
-        // Parse "end workout" or "finish workout"
-        if ((lowerText.contains("end") || lowerText.contains("finish")) && lowerText.contains("workout")) {
-            return VoiceCommand.EndWorkout
-        }
-        
-        return null
     }
-    
+
+    fun speak(text: String) {
+        if (isTextToSpeechReady) {
+            textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
+        }
+    }
+
     fun cleanup() {
         speechRecognizer?.destroy()
+        textToSpeech?.stop()
+        textToSpeech?.shutdown()
         speechRecognizer = null
+        textToSpeech = null
+    }
+
+    companion object {
+        private const val TAG = "VoiceCommandHelper"
     }
 }
 
-sealed class VoiceCommand {
-    data class LogReps(val reps: Int) : VoiceCommand()
-    data class SetWeight(val weightKg: Double) : VoiceCommand()
-    object CompleteSet : VoiceCommand()
-    object StartWorkout : VoiceCommand()
-    object EndWorkout : VoiceCommand()
-}
+/**
+ * Parsed voice command data
+ */
+data class VoiceCommand(
+    val reps: Int,
+    val weight: Float,
+    val rpe: Int? = null,
+    val rawText: String
+)

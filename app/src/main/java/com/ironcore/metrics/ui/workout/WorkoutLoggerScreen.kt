@@ -3,6 +3,8 @@ package com.ironcore.metrics.ui.workout
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -11,6 +13,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import android.widget.Toast
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import com.ironcore.metrics.ui.components.IronCoreButton
 import com.ironcore.metrics.ui.components.IronCoreCard
 import com.ironcore.metrics.ui.theme.CobaltBlue
@@ -28,6 +35,44 @@ fun WorkoutLoggerScreen(
     var weight by remember { mutableStateOf("100") }
     var rpe by remember { mutableStateOf("8") }
     var notes by remember { mutableStateOf("") }
+    
+    // Voice command state
+    var hasAudioPermission by remember { 
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == 
+            PackageManager.PERMISSION_GRANTED
+        )
+    }
+    
+    val voiceCommandHelper = remember {
+        VoiceCommandHelper(context) { command ->
+            // Update form fields with voice command data
+            weight = command.weight.toInt().toString()
+            reps = command.reps.toString()
+            command.rpe?.let { rpe = it.toString() }
+            notes = "Voice: ${command.rawText}"
+        }
+    }
+    
+    val isListening by voiceCommandHelper.isListening.collectAsState()
+    val lastRecognizedText by voiceCommandHelper.lastRecognizedText.collectAsState()
+    
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        hasAudioPermission = isGranted
+        if (isGranted) {
+            voiceCommandHelper.startListening()
+        } else {
+            Toast.makeText(context, "Microphone permission required for voice commands", Toast.LENGTH_LONG).show()
+        }
+    }
+    
+    DisposableEffect(Unit) {
+        onDispose {
+            voiceCommandHelper.cleanup()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -46,6 +91,51 @@ fun WorkoutLoggerScreen(
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onBackground
             )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Voice Command Button
+            IronCoreCard {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = if (isListening) "Listening..." else "Voice Command",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = if (isListening) CobaltBlue else MaterialTheme.colorScheme.onSurface
+                        )
+                        if (lastRecognizedText.isNotEmpty()) {
+                            Text(
+                                text = lastRecognizedText,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Granite
+                            )
+                        }
+                    }
+                    IconButton(
+                        onClick = {
+                            if (isListening) {
+                                voiceCommandHelper.stopListening()
+                            } else {
+                                if (hasAudioPermission) {
+                                    voiceCommandHelper.startListening()
+                                } else {
+                                    permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                }
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Mic,
+                            contentDescription = "Voice Command",
+                            tint = if (isListening) CobaltBlue else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
             
             Spacer(modifier = Modifier.height(16.dp))
 
