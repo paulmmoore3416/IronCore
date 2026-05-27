@@ -14,6 +14,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import android.widget.Toast
 import com.ironcore.metrics.R
 import com.ironcore.metrics.data.auth.AuthState
 import com.ironcore.metrics.data.model.UnitSystem
@@ -90,13 +91,34 @@ fun SettingsScreen(
                         )
                         Button(
                             onClick = {
-                                viewModel.updateProfile(
-                                    name,
-                                    age.toIntOrNull() ?: 30,
-                                    weight.toFloatOrNull() ?: 70f,
-                                    height.toFloatOrNull() ?: 175f,
-                                    "Maintenance"
-                                )
+                                val validatedAge = age.toIntOrNull()
+                                val validatedWeight = weight.toFloatOrNull()
+                                val validatedHeight = height.toFloatOrNull()
+                                
+                                when {
+                                    name.isBlank() -> {
+                                        Toast.makeText(context, "Name is required", Toast.LENGTH_SHORT).show()
+                                    }
+                                    validatedAge == null || validatedAge < 13 || validatedAge > 120 -> {
+                                        Toast.makeText(context, "Age must be between 13-120", Toast.LENGTH_SHORT).show()
+                                    }
+                                    validatedWeight == null || validatedWeight < 30 || validatedWeight > 300 -> {
+                                        Toast.makeText(context, "Weight must be between 30-300 kg", Toast.LENGTH_SHORT).show()
+                                    }
+                                    validatedHeight == null || validatedHeight < 100 || validatedHeight > 250 -> {
+                                        Toast.makeText(context, "Height must be between 100-250 cm", Toast.LENGTH_SHORT).show()
+                                    }
+                                    else -> {
+                                        viewModel.updateProfile(
+                                            name,
+                                            validatedAge,
+                                            validatedWeight,
+                                            validatedHeight,
+                                            "Maintenance"
+                                        )
+                                        Toast.makeText(context, "Profile saved successfully", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
                             },
                             modifier = Modifier.align(Alignment.End)
                         ) {

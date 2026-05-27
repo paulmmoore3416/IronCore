@@ -16,7 +16,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class NutritionViewModel @Inject constructor(
-    private val apiService: HomelabApiService
+    private val apiService: HomelabApiService,
+    private val nutritionDao: com.ironcore.metrics.data.local.dao.NutritionDao
 ) : ViewModel() {
 
     private val _meals = MutableStateFlow<List<RemoteMeal>>(emptyList())
@@ -30,6 +31,26 @@ class NutritionViewModel @Inject constructor(
     // Mock setting for AI Core vs Remote. In a real app, this comes from DataStore
     var useAiCoreOnDevice = true
 
+    init {
+        // Load existing meals from database on startup
+        viewModelScope.launch {
+            nutritionDao.getAllMeals().collect { dbMeals ->
+                if (_meals.value.isEmpty() && dbMeals.isNotEmpty()) {
+                    _meals.value = dbMeals.map { meal ->
+                        RemoteMeal(
+                            name = meal.name,
+                            calories = meal.totalCalories,
+                            protein = meal.proteinGrams,
+                            carbs = meal.carbGrams,
+                            fat = meal.fatGrams,
+                            ingredients = emptyList()
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     fun generatePlan() {
         viewModelScope.launch {
             _isLoading.value = true
@@ -42,6 +63,9 @@ class NutritionViewModel @Inject constructor(
                         RemoteMeal("AICore Chicken Salad", 600, 50.0f, 20.0f, 25.0f, listOf("Chicken", "Greens", "Olive Oil")),
                         RemoteMeal("AICore Steak & Rice", 800, 60.0f, 80.0f, 30.0f, listOf("Steak", "Rice", "Broccoli"))
                     )
+                    
+                    // Persist generated meals to database
+                    saveMealsToDatabase(_meals.value)
                 } else {
                     // Remote Ollama/Homelab Generation
                     val prompt = """
@@ -62,6 +86,9 @@ class NutritionViewModel @Inject constructor(
                     val generatedMeals: List<RemoteMeal> = gson.fromJson(response.response, listType)
                     
                     _meals.value = generatedMeals
+                    
+                    // Persist generated meals to database
+                    saveMealsToDatabase(generatedMeals)
                 }
             } catch (e: Exception) {
                 // Fallback to local mock if remote fails
@@ -72,6 +99,20 @@ class NutritionViewModel @Inject constructor(
             } finally {
                 _isLoading.value = false
             }
+        }
+    }
+
+    private suspend fun saveMealsToDatabase(meals: List<RemoteMeal>) {
+        meals.forEach { remoteMeal ->
+            val meal = com.ironcore.metrics.data.local.entities.Meal(
+                name = remoteMeal.name,
+                totalCalories = remoteMeal.calories,
+                proteinGrams = remoteMeal.protein,
+                carbGrams = remoteMeal.carbs,
+                fatGrams = remoteMeal.fat,
+                timestamp = System.currentTimeMillis()
+            )
+            nutritionDao.insertMeal(meal)
         }
     }
 }

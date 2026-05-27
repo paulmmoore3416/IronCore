@@ -8,7 +8,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import android.widget.Toast
 import com.ironcore.metrics.ui.components.IronCoreButton
 import com.ironcore.metrics.ui.components.IronCoreCard
 import com.ironcore.metrics.ui.theme.CobaltBlue
@@ -18,6 +20,7 @@ import com.ironcore.metrics.ui.theme.Granite
 fun WorkoutLoggerScreen(
     viewModel: WorkoutViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val currentWorkout by viewModel.currentWorkout.collectAsState()
     val sets by viewModel.workoutSets.collectAsState()
 
@@ -86,13 +89,37 @@ fun WorkoutLoggerScreen(
                 Spacer(modifier = Modifier.height(12.dp))
                 IronCoreButton(
                     onClick = { 
-                        viewModel.addSet(
-                            exerciseId = 1, 
-                            reps = reps.toIntOrNull() ?: 0, 
-                            weight = weight.toFloatOrNull() ?: 0f,
-                            rpe = rpe.toIntOrNull(),
-                            notes = if (notes.isEmpty()) null else notes
-                        ) 
+                        // Validate inputs before saving
+                        val validatedWeight = weight.toFloatOrNull()
+                        val validatedReps = reps.toIntOrNull()
+                        val validatedRpe = rpe.toIntOrNull()
+                        
+                        when {
+                            validatedWeight == null || validatedWeight <= 0 -> {
+                                Toast.makeText(context, "Please enter a valid weight (> 0)", Toast.LENGTH_SHORT).show()
+                            }
+                            validatedReps == null || validatedReps <= 0 || validatedReps > 100 -> {
+                                Toast.makeText(context, "Please enter valid reps (1-100)", Toast.LENGTH_SHORT).show()
+                            }
+                            validatedRpe != null && (validatedRpe < 1 || validatedRpe > 10) -> {
+                                Toast.makeText(context, "RPE must be between 1-10", Toast.LENGTH_SHORT).show()
+                            }
+                            else -> {
+                                viewModel.addSet(
+                                    exerciseId = 1, 
+                                    reps = validatedReps, 
+                                    weight = validatedWeight,
+                                    rpe = validatedRpe,
+                                    notes = if (notes.isEmpty()) null else notes
+                                )
+                                Toast.makeText(context, "Set logged successfully", Toast.LENGTH_SHORT).show()
+                                // Clear inputs after successful save
+                                reps = "10"
+                                weight = "100"
+                                rpe = "8"
+                                notes = ""
+                            }
+                        }
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {

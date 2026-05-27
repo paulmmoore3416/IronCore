@@ -11,6 +11,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
+import android.widget.Toast
 import com.ironcore.metrics.ui.components.IronCoreCard
 import com.ironcore.metrics.ui.theme.*
 
@@ -18,9 +21,29 @@ import com.ironcore.metrics.ui.theme.*
 @Composable
 fun MetricDetailScreen(
     metricType: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    viewModel: MetricDetailViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     var inputValue by remember { mutableStateOf("") }
+    val saveSuccess by viewModel.saveSuccess.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+    
+    // Handle save success
+    LaunchedEffect(saveSuccess) {
+        if (saveSuccess) {
+            Toast.makeText(context, "Data saved successfully", Toast.LENGTH_SHORT).show()
+            onBack()
+        }
+    }
+    
+    // Handle error messages
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let { error ->
+            Toast.makeText(context, error, Toast.LENGTH_LONG).show()
+            viewModel.clearError()
+        }
+    }
     
     val themeColor = when(metricType.lowercase()) {
         "steps" -> GoCyan
@@ -85,7 +108,13 @@ fun MetricDetailScreen(
                     Spacer(modifier = Modifier.height(24.dp))
                     
                     Button(
-                        onClick = { onBack() },
+                        onClick = { 
+                            if (inputValue.isNotBlank()) {
+                                viewModel.saveMetric(metricType, inputValue)
+                            } else {
+                                Toast.makeText(context, "Please enter a value", Toast.LENGTH_SHORT).show()
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(containerColor = themeColor)
                     ) {
