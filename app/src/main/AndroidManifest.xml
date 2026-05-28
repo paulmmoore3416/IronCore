@@ -37,6 +37,24 @@
     <!-- Storage (for workout photos/videos) -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+    
+    <!-- Phone (for emergency calls) -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.READ_CALL_LOG" />
+    
+    <!-- Contacts (for emergency contacts) -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    
+    <!-- Music & Audio (for workout music control) -->
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    
+    <!-- Android Auto -->
+    <uses-permission android:name="android.permission.CAR_APP_ACCESS_SURFACE" />
+    <uses-permission android:name="android.permission.CAR_APP_LAUNCH_TEMPLATE" />
     
     <!-- Foreground Services -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -47,6 +65,11 @@
     <uses-permission android:name="android.permission.HEALTH_READ_HEART_RATE" />
     <uses-permission android:name="android.permission.HEALTH_READ_WEIGHT" />
     <uses-permission android:name="android.permission.HEALTH_READ_ACTIVE_CALORIES_BURNED" />
+    <uses-permission android:name="android.permission.HEALTH_READ_EXERCISE_SESSION" />
+    <uses-permission android:name="android.permission.HEALTH_READ_SLEEP_SESSION" />
+    <uses-permission android:name="android.permission.HEALTH_READ_HYDRATION" />
+    <uses-permission android:name="android.permission.HEALTH_READ_OXYGEN_SATURATION" />
+    <uses-permission android:name="android.permission.HEALTH_READ_RESPIRATORY_RATE" />
     <uses-permission android:name="android.permission.HEALTH_WRITE_STEPS" />
     <uses-permission android:name="android.permission.HEALTH_WRITE_HEART_RATE" />
     <uses-permission android:name="android.permission.HEALTH_WRITE_WEIGHT" />
@@ -91,6 +114,7 @@
 
         <service
             android:name=".car.IronCoreCarAppService"
+            android:icon="@drawable/auto_logo"
             android:exported="true">
             <intent-filter>
                 <action android:name="androidx.car.app.CarAppService" />

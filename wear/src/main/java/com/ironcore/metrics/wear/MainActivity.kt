@@ -11,7 +11,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.wear.compose.material.*
+import androidx.wear.compose.navigation.SwipeDismissableNavHost
+import androidx.wear.compose.navigation.composable
+import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import com.ironcore.metrics.wear.ui.WearViewModel
+import com.ironcore.metrics.wear.ui.NutritionScreen
 import com.ironcore.metrics.wear.ui.theme.IronCoreWearTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -29,6 +33,23 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun WearApp(viewModel: WearViewModel = hiltViewModel()) {
+    val navController = rememberSwipeDismissableNavController()
+
+    SwipeDismissableNavHost(
+        navController = navController,
+        startDestination = "dashboard"
+    ) {
+        composable("dashboard") {
+            DashboardScreen(viewModel, onNavigateToNutrition = { navController.navigate("nutrition") })
+        }
+        composable("nutrition") {
+            NutritionScreen(viewModel)
+        }
+    }
+}
+
+@Composable
+fun DashboardScreen(viewModel: WearViewModel, onNavigateToNutrition: () -> Unit) {
     val heartRate by viewModel.heartRate.collectAsState()
     val steps by viewModel.steps.collectAsState()
     val hydration by viewModel.hydration.collectAsState()
@@ -190,6 +211,29 @@ fun WearApp(viewModel: WearViewModel = hiltViewModel()) {
                         Text(
                             text = "In: $consumedCalories | Out: ${activeCalories.toInt()}",
                             style = MaterialTheme.typography.caption3
+                        )
+                    }
+                }
+            }
+
+            // Nutrition Plan Card
+            item {
+                Card(
+                    onClick = onNavigateToNutrition,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Daily Meal Plan",
+                            style = MaterialTheme.typography.caption2
+                        )
+                        Text(
+                            text = "AI Generated",
+                            style = MaterialTheme.typography.title3,
+                            color = MaterialTheme.colors.primary
                         )
                     }
                 }

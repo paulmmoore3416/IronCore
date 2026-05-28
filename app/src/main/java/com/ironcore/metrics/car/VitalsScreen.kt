@@ -8,35 +8,45 @@ import androidx.car.app.CarToast
 /**
  * A screen to view current vitals in Android Auto.
  */
+/**
+ * Addition 2: Vitals Safety HUD
+ * High-visibility real-time metrics for driving safety.
+ */
 class VitalsScreen(carContext: CarContext) : Screen(carContext) {
     override fun onGetTemplate(): Template {
-        val row1 = Row.Builder()
-            .setTitle("Heart Rate")
-            .addText("82 BPM - Normal")
-            .build()
-            
-        val row2 = Row.Builder()
-            .setTitle("Recovery Score")
-            .addText("85% - Optimal readiness")
-            .build()
+        val itemListBuilder = ItemList.Builder()
+        
+        // Heart Rate Grid Item
+        itemListBuilder.addItem(
+            GridItem.Builder()
+                .setTitle("Heart Rate")
+                .setText("82 BPM") 
+                .setImage(CarIcon.APP_ICON)
+                .build()
+        )
 
-        val pane = Pane.Builder()
-            .addRow(row1)
-            .addRow(row2)
-            .addAction(
-                Action.Builder()
-                    .setTitle("Refresh")
-                    .setOnClickListener { 
-                        CarToast.makeText(carContext, "Vitals refreshed", CarToast.LENGTH_SHORT).show()
-                        invalidate()
-                    }
-                    .build()
-            )
-            .build()
+        // SpO2 Grid Item
+        itemListBuilder.addItem(
+            GridItem.Builder()
+                .setTitle("SpO2")
+                .setText("98%")
+                .setImage(CarIcon.APP_ICON)
+                .build()
+        )
 
-        return PaneTemplate.Builder(pane)
+        // Safety Alert
+        itemListBuilder.addItem(
+            GridItem.Builder()
+                .setTitle("Driver Status")
+                .setText("Optimal")
+                .setImage(CarIcon.APP_ICON)
+                .build()
+        )
+
+        return GridTemplate.Builder()
+            .setTitle("Vitals Safety HUD")
             .setHeaderAction(Action.BACK)
-            .setTitle("Live Vitals")
+            .setSingleList(itemListBuilder.build())
             .build()
     }
 }

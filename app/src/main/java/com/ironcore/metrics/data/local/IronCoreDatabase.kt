@@ -15,7 +15,7 @@ import com.ironcore.metrics.data.local.entities.*
         HydrationLog::class,
         WellnessLog::class
     ],
-    version = 2,
+    version = 4,
     exportSchema = false
 )
 abstract class IronCoreDatabase : RoomDatabase() {

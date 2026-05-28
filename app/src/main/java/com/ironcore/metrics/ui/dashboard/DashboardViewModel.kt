@@ -13,6 +13,7 @@ import com.ironcore.metrics.domain.RecoveryAdvisorService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -76,6 +77,13 @@ class DashboardViewModel @Inject constructor(
     private val _isFocusMode = MutableStateFlow(false)
     val isFocusMode = _isFocusMode.asStateFlow()
 
+    // Connectivity States
+    private val _isOnline = MutableStateFlow(true)
+    val isOnline = _isOnline.asStateFlow()
+
+    private val _isWearableConnected = MutableStateFlow(false)
+    val isWearableConnected = _isWearableConnected.asStateFlow()
+
     // Biometric Auth State
     private val _isAuthenticated = MutableStateFlow(false)
     val isAuthenticated = _isAuthenticated.asStateFlow()
@@ -84,6 +92,7 @@ class DashboardViewModel @Inject constructor(
     val hydrationTarget = 2000
 
     init {
+        checkConnectivity()
         // Simulation of real-time data updates
         viewModelScope.launch {
             while (true) {
@@ -103,6 +112,35 @@ class DashboardViewModel @Inject constructor(
                         _steps.value += (1..5).random()
                     }
                 }
+            }
+        }
+    }
+
+    private fun checkConnectivity() {
+        // Network connectivity
+        val connectivityManager = application.getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+        val networkCallback = object : android.net.ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: android.net.Network) { _isOnline.value = true }
+            override fun onLost(network: android.net.Network) { _isOnline.value = false }
+        }
+        try {
+            connectivityManager.registerDefaultNetworkCallback(networkCallback)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error registering network callback", e)
+        }
+
+        // Wearable connectivity
+        viewModelScope.launch {
+            while (true) {
+                try {
+                    val nodes = com.google.android.gms.wearable.Wearable.getCapabilityClient(application)
+                        .getCapability("ironcore_wear_app", com.google.android.gms.wearable.CapabilityClient.FILTER_REACHABLE)
+                        .await().nodes
+                    _isWearableConnected.value = nodes.isNotEmpty()
+                } catch (e: Exception) {
+                    _isWearableConnected.value = false
+                }
+                kotlinx.coroutines.delay(30000) // Check every 30 seconds
             }
         }
     }
@@ -160,20 +198,51 @@ class DashboardViewModel @Inject constructor(
 
     fun checkPermissionsAndFetchData() {
         viewModelScope.launch {
-            val isAvailable = healthConnectManager.isAvailable()
-            val hasPermissions = healthConnectManager.hasAllPermissions()
-            
-            Log.d(TAG, "Health Connect available: $isAvailable")
-            Log.d(TAG, "Has all permissions: $hasPermissions")
-            
-            if (isAvailable && hasPermissions) {
-                _permissionsGranted.value = true
-                Log.d(TAG, "Permissions granted, fetching health data...")
-                fetchHealthData()
+            try {
+                // Add delay to ensure permissions are fully registered after grant
+                kotlinx.coroutines.delay(1000)
+                
+                val isAvailable = healthConnectManager.isAvailable()
+                Log.d(TAG, "Health Connect available: $isAvailable")
+                
+                if (!isAvailable) {
+                    _permissionsGranted.value = false
+                    Log.w(TAG, "Health Connect is not available on this device")
+                    return@launch
+                }
+                
+                // Properly await the suspend function
+                val hasPermissions = healthConnectManager.hasAllPermissions()
+                Log.d(TAG, "Has all Health Connect permissions: $hasPermissions")
+                
+                // Always fetch local nutrition/hydration data regardless of Health Connect
                 fetchNutritionData()
-            } else {
+                
+                if (hasPermissions) {
+                    _permissionsGranted.value = true
+                    Log.d(TAG, "✅ All permissions granted! Fetching health data...")
+                    fetchHealthData()
+                } else {
+                    _permissionsGranted.value = false
+                    Log.w(TAG, "❌ Health Connect permissions not fully granted")
+                    
+                    // Log which permissions are missing for debugging
+                    viewModelScope.launch {
+                        try {
+                            val granted = healthConnectManager.healthConnectClient.permissionController.getGrantedPermissions()
+                            val missing = healthConnectManager.permissions.filter { !granted.contains(it) }
+                            Log.w(TAG, "Missing ${missing.size} permissions:")
+                            missing.forEach { perm ->
+                                Log.w(TAG, "  - $perm")
+                            }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error checking granted permissions", e)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error checking permissions", e)
                 _permissionsGranted.value = false
-                Log.w(TAG, "Permissions not granted or Health Connect unavailable")
             }
         }
     }

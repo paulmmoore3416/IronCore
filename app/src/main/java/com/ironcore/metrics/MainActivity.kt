@@ -46,22 +46,46 @@ class MainActivity : FragmentActivity() {
     private val requestHealthConnectPermissionLauncher = registerForActivityResult(
         PermissionController.createRequestPermissionResultContract()
     ) { granted ->
-        if (granted.containsAll(healthConnectManager.permissions)) {
-            // Health Connect permissions granted, trigger callback to refresh UI
+        android.util.Log.d("MainActivity", "Health Connect permission result received")
+        android.util.Log.d("MainActivity", "Granted permissions: ${granted.size}")
+        android.util.Log.d("MainActivity", "Required permissions: ${healthConnectManager.permissions.size}")
+        
+        // Always trigger callback to refresh UI, even if not all permissions granted
+        // This allows the UI to update and show current state
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            android.util.Log.d("MainActivity", "Triggering permission callback after delay")
             onPermissionsGrantedCallback?.invoke()
+        }, 500)
+        
+        if (granted.containsAll(healthConnectManager.permissions)) {
+            android.util.Log.d("MainActivity", "✅ All Health Connect permissions granted!")
+        } else {
+            val missing = healthConnectManager.permissions.filter { !granted.contains(it) }
+            android.util.Log.w("MainActivity", "❌ Missing Health Connect permissions: ${missing.size}")
+            missing.forEach { perm ->
+                android.util.Log.w("MainActivity", "  - $perm")
+            }
         }
     }
     
     private val requestMultiplePermissionsLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
+        android.util.Log.d("MainActivity", "Runtime permissions result received")
+        android.util.Log.d("MainActivity", "Total permissions requested: ${permissions.size}")
+        
         val allGranted = permissions.values.all { it }
         if (allGranted) {
+            android.util.Log.d("MainActivity", "All runtime permissions granted!")
             // All runtime permissions granted, trigger callback to refresh UI
             onPermissionsGrantedCallback?.invoke()
         } else {
             // Some permissions denied - app will still work with reduced functionality
             val deniedPermissions = permissions.filterValues { !it }.keys
+            android.util.Log.w("MainActivity", "Some runtime permissions denied: ${deniedPermissions.size}")
+            deniedPermissions.forEach { perm ->
+                android.util.Log.w("MainActivity", "  - $perm")
+            }
             // Still trigger callback to update UI with current permission state
             onPermissionsGrantedCallback?.invoke()
         }
@@ -128,19 +152,83 @@ class MainActivity : FragmentActivity() {
     }
 
     fun requestPermissions(onGranted: (() -> Unit)? = null) {
+        android.util.Log.d("MainActivity", "requestPermissions() called")
+        
         // Store callback to trigger after permissions are granted
         onPermissionsGrantedCallback = onGranted
         
-        // Request Health Connect permissions - this opens Health Connect app
-        requestHealthConnectPermissionLauncher.launch(healthConnectManager.permissions)
+        // Check if Health Connect is available
+        if (!healthConnectManager.isAvailable()) {
+            android.util.Log.e("MainActivity", "Health Connect is NOT available!")
+            showHealthConnectNotInstalledDialog()
+            return
+        }
         
-        // Request runtime permissions after a short delay to avoid overwhelming user
+        android.util.Log.d("MainActivity", "Health Connect is available")
+        android.util.Log.d("MainActivity", "Opening Health Connect app directly")
+        
+        try {
+            // Open Health Connect app directly to the app permissions screen
+            val intent = android.content.Intent().apply {
+                action = android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                data = android.net.Uri.fromParts("package", "com.google.android.apps.healthdata", null)
+                addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            
+            startActivity(intent)
+            android.util.Log.d("MainActivity", "Opened Health Connect settings")
+            
+            // Show a toast to guide the user
+            android.widget.Toast.makeText(
+                this,
+                "Please tap 'App permissions' → 'IronCore Metrics' and grant all permissions",
+                android.widget.Toast.LENGTH_LONG
+            ).show()
+            
+            // Trigger callback after delay to refresh UI when user returns
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                android.util.Log.d("MainActivity", "Triggering permission callback after Health Connect visit")
+                onPermissionsGrantedCallback?.invoke()
+            }, 3000)
+            
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Error opening Health Connect: ${e.message}")
+            // Fallback to permission launcher
+            requestHealthConnectPermissionLauncher.launch(healthConnectManager.permissions)
+        }
+        
+        // Request runtime permissions after a short delay
         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
             val missingPermissions = permissionManager.getMissingPermissions()
+            android.util.Log.d("MainActivity", "Missing runtime permissions: ${missingPermissions.size}")
             if (missingPermissions.isNotEmpty()) {
                 requestMultiplePermissionsLauncher.launch(missingPermissions.toTypedArray())
             }
         }, 1000)
+    }
+    
+    private fun showHealthConnectNotInstalledDialog() {
+        android.app.AlertDialog.Builder(this)
+            .setTitle("Health Connect Required")
+            .setMessage("IronCore Metrics requires Health Connect to access your health data.\n\n" +
+                       "Please install Health Connect from the Google Play Store first.")
+            .setPositiveButton("Open Play Store") { _, _ ->
+                try {
+                    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                        data = android.net.Uri.parse("market://details?id=com.google.android.apps.healthdata")
+                        setPackage("com.android.vending")
+                    }
+                    startActivity(intent)
+                } catch (e: android.content.ActivityNotFoundException) {
+                    // Fallback to browser
+                    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                        data = android.net.Uri.parse("https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata")
+                    }
+                    startActivity(intent)
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 }
 

@@ -19,6 +19,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -34,9 +38,12 @@ import com.ironcore.metrics.ui.theme.*
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import android.widget.Toast
-
 import androidx.compose.ui.platform.LocalContext
 import com.ironcore.metrics.MainActivity
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 
 @Composable
 fun DashboardScreen(
@@ -54,12 +61,25 @@ fun DashboardScreen(
     val respiratoryRate by viewModel.respiratoryRate.collectAsState()
     val recoveryScore by viewModel.recoveryScore.collectAsState()
     val permissionsGranted by viewModel.permissionsGranted.collectAsState()
+    val isOnline by viewModel.isOnline.collectAsState()
+    val isWearableConnected by viewModel.isWearableConnected.collectAsState()
     
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
+    val scope = rememberCoroutineScope()
+    var isRefreshing by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.checkPermissionsAndFetchData()
+    }
+    
+    fun onRefresh() {
+        scope.launch {
+            isRefreshing = true
+            viewModel.checkPermissionsAndFetchData()
+            delay(1000) // Give time for data to load
+            isRefreshing = false
+        }
     }
 
     // Enhancement 8: Dynamic Glass Background (Time-based variation)
@@ -76,24 +96,31 @@ fun DashboardScreen(
         .fillMaxSize()
         .background(Brush.verticalGradient(backgroundColors))
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
+        SwipeRefresh(
+            state = rememberSwipeRefreshState(isRefreshing),
+            onRefresh = { onRefresh() },
+            modifier = Modifier.fillMaxSize()
         ) {
-            HeaderSection(
-                isFocusMode = isFocusMode,
-                onRefresh = { viewModel.checkPermissionsAndFetchData() },
-                onToggleFocus = { viewModel.toggleFocusMode() }
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                HeaderSection(
+                    isFocusMode = isFocusMode,
+                    isOnline = isOnline,
+                    isWearableConnected = isWearableConnected,
+                    onRefresh = { onRefresh() },
+                    onToggleFocus = { viewModel.toggleFocusMode() },
+                    onQuickAddHydration = { 
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        viewModel.addHydration(250) 
+                    }
+                )
 
-            if (!permissionsGranted) {
-                PermissionWarning(context = context, viewModel = viewModel)
-            }
+                Spacer(modifier = Modifier.height(24.dp))
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            LazyVerticalGrid(
+                LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -139,6 +166,20 @@ fun DashboardScreen(
                         }
                     )
                 }
+                item {
+                    MetricCard(
+                        title = "Fossil Gen 6",
+                        value = "Connected",
+                        icon = Icons.Default.Timeline,
+                        trend = "Venture Edition",
+                        themeColor = GoCyan,
+                        onClick = { 
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onMetricClick("device") 
+                        }
+                    )
+                }
+
                 item {
                     MetricCard(
                         title = "Body Weight",
@@ -268,6 +309,7 @@ fun DashboardScreen(
                 }
             }
         }
+        }
     }
 }
 
@@ -337,86 +379,6 @@ fun SocialLeaderboardCard(onClick: () -> Unit = {}) {
         }
     }
 }
-
-@Composable
-fun HeaderSection(
-    isFocusMode: Boolean,
-    onRefresh: () -> Unit,
-    onToggleFocus: () -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column {
-            Text(
-                text = if (isFocusMode) "FOCUS ACTIVE" else "IronCore Overview",
-                style = MaterialTheme.typography.headlineLarge,
-                color = if (isFocusMode) Color.Red else MaterialTheme.colorScheme.onBackground
-            )
-            Text(
-                text = LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, MMM dd")),
-                style = MaterialTheme.typography.labelLarge,
-                color = GoCyan
-            )
-        }
-        
-        Row {
-            IconButton(onClick = onToggleFocus) {
-                Icon(
-                    if (isFocusMode) Icons.Default.FitnessCenter else Icons.Default.Timeline,
-                    contentDescription = "Focus",
-                    tint = if (isFocusMode) Color.Red else GoCyan
-                )
-            }
-            IconButton(onClick = onRefresh) {
-                Icon(Icons.Default.Timeline, contentDescription = "Refresh", tint = GoCyan)
-            }
-        }
-    }
-}
-
-@Composable
-fun PermissionWarning(context: android.content.Context, viewModel: DashboardViewModel) {
-    Spacer(modifier = Modifier.height(16.dp))
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "Health Connect Access Required",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onErrorContainer
-            )
-            Text(
-                text = "To provide live fitness and health tracking, IronCore needs permission to access your Health Connect data.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onErrorContainer
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = { 
-                    var ctx = context
-                    while (ctx is android.content.ContextWrapper) {
-                        if (ctx is MainActivity) {
-                            break
-                        }
-                        ctx = ctx.baseContext
-                    }
-                    (ctx as? MainActivity)?.requestPermissions {
-                        // Callback: refresh data after permissions are granted
-                        viewModel.checkPermissionsAndFetchData()
-                    }
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-            ) {
-                Text("Grant Permissions")
-            }
-        }
-    }
-}
-
 @Composable
 fun HydrationVisualizer(current: Int, target: Int, onClick: () -> Unit, onAdd: () -> Unit) {
     val progress = (current.toFloat() / target).coerceIn(0f, 1f)
@@ -472,7 +434,7 @@ fun MetricCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Icon(icon, contentDescription = null, tint = themeColor, modifier = Modifier.size(24.dp))
+            Icon(icon, contentDescription = title, tint = themeColor, modifier = Modifier.size(24.dp))
         }
         Spacer(modifier = Modifier.height(8.dp))
         Text(text = title, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)

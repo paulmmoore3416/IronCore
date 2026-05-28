@@ -25,6 +25,7 @@ class WearDataSyncService @Inject constructor(
         private const val PATH_HEART_RATE = "/ironcore/heartrate"
         private const val PATH_STEPS = "/ironcore/steps"
         private const val PATH_CALORIES = "/ironcore/calories"
+        private const val PATH_NUTRITION_PLAN = "/ironcore/nutrition/plan"
         
         // Data keys
         private const val KEY_HYDRATION_ML = "hydration_ml"
@@ -36,6 +37,7 @@ class WearDataSyncService @Inject constructor(
         private const val KEY_ACTIVE_CALORIES = "active_calories"
         private const val KEY_CONSUMED_CALORIES = "consumed_calories"
         private const val KEY_TIMESTAMP = "timestamp"
+        private const val KEY_NUTRITION_JSON = "nutrition_json"
     }
 
     private val dataClient: DataClient by lazy {
@@ -78,6 +80,22 @@ class WearDataSyncService @Inject constructor(
             true
         } catch (e: Exception) {
             Log.e(TAG, "Error syncing recovery data", e)
+            false
+        }
+    }
+
+    suspend fun syncNutritionPlan(nutritionJson: String): Boolean {
+        return try {
+            val putDataReq = PutDataMapRequest.create(PATH_NUTRITION_PLAN).apply {
+                dataMap.putString(KEY_NUTRITION_JSON, nutritionJson)
+                dataMap.putLong(KEY_TIMESTAMP, System.currentTimeMillis())
+            }.asPutDataRequest()
+            
+            dataClient.putDataItem(putDataReq).await()
+            Log.d(TAG, "Nutrition plan synced")
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error syncing nutrition plan", e)
             false
         }
     }

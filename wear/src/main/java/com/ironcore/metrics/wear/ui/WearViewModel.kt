@@ -2,6 +2,8 @@ package com.ironcore.metrics.wear.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.ironcore.metrics.wear.data.HydrationData
 import com.ironcore.metrics.wear.data.RecoveryData
 import com.ironcore.metrics.wear.data.WearDataSyncService
@@ -34,6 +36,11 @@ class WearViewModel @Inject constructor(
     private val _consumedCalories = MutableStateFlow(0)
     val consumedCalories = _consumedCalories.asStateFlow()
 
+    private val _nutritionPlan = MutableStateFlow<List<WearMeal>>(emptyList())
+    val nutritionPlan = _nutritionPlan.asStateFlow()
+
+    private val gson = Gson()
+
     init {
         loadMetrics()
     }
@@ -42,6 +49,15 @@ class WearViewModel @Inject constructor(
         viewModelScope.launch {
             _hydration.value = wearDataSyncService.readHydration()
             _recovery.value = wearDataSyncService.readRecovery()
+            
+            wearDataSyncService.readNutritionPlan()?.let { json ->
+                try {
+                    val listType = object : TypeToken<List<WearMeal>>() {}.type
+                    _nutritionPlan.value = gson.fromJson(json, listType)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
         }
     }
 

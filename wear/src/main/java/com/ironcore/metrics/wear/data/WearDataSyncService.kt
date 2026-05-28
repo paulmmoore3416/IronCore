@@ -26,6 +26,7 @@ class WearDataSyncService @Inject constructor(
         private const val PATH_HEART_RATE = "/ironcore/heartrate"
         private const val PATH_STEPS = "/ironcore/steps"
         private const val PATH_CALORIES = "/ironcore/calories"
+        private const val PATH_NUTRITION_PLAN = "/ironcore/nutrition/plan"
         private const val PATH_LOG_HYDRATION = "/ironcore/log_hydration"
         
         // Data keys
@@ -38,6 +39,7 @@ class WearDataSyncService @Inject constructor(
         private const val KEY_ACTIVE_CALORIES = "active_calories"
         private const val KEY_CONSUMED_CALORIES = "consumed_calories"
         private const val KEY_TIMESTAMP = "timestamp"
+        private const val KEY_NUTRITION_JSON = "nutrition_json"
     }
 
     private val dataClient: DataClient by lazy {
@@ -206,6 +208,25 @@ class WearDataSyncService @Inject constructor(
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error reading recovery data", e)
+            null
+        }
+    }
+
+    /**
+     * Reads nutrition plan from DataClient.
+     */
+    suspend fun readNutritionPlan(): String? {
+        return try {
+            val dataItems = dataClient.getDataItems(
+                Uri.parse("wear://*$PATH_NUTRITION_PLAN")
+            ).await()
+            
+            dataItems.firstOrNull()?.let { item ->
+                val dataMap = DataMapItem.fromDataItem(item).dataMap
+                dataMap.getString(KEY_NUTRITION_JSON)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error reading nutrition plan", e)
             null
         }
     }

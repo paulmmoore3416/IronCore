@@ -56,9 +56,33 @@ class MainMenuScreen(carContext: CarContext) : Screen(carContext) {
             GridItem.Builder()
                 .setTitle("Emergency")
                 .setText("SOS Setup")
-                .setImage(CarIcon.APP_ICON) // In a real app, use a red alert icon
+                .setImage(CarIcon.APP_ICON)
                 .setOnClickListener {
                     screenManager.push(EmergencyAlertScreen(carContext))
+                }
+                .build()
+        )
+
+        // Addition 1: Fueling Map
+        itemListBuilder.addItem(
+            GridItem.Builder()
+                .setTitle("Fueling Map")
+                .setText("Find recovery food")
+                .setImage(CarIcon.APP_ICON)
+                .setOnClickListener {
+                    screenManager.push(FuelingMapScreen(carContext, "Mediterranean")) // Default or synced cuisine
+                }
+                .build()
+        )
+
+        // Addition 4: Commute Prep
+        itemListBuilder.addItem(
+            GridItem.Builder()
+                .setTitle("Commute Prep")
+                .setText("Prepare for workout")
+                .setImage(CarIcon.APP_ICON)
+                .setOnClickListener {
+                    CarToast.makeText(carContext, "Home gym pre-heated. Workout ready.", CarToast.LENGTH_LONG).show()
                 }
                 .build()
         )
@@ -67,10 +91,10 @@ class MainMenuScreen(carContext: CarContext) : Screen(carContext) {
         itemListBuilder.addItem(
             GridItem.Builder()
                 .setTitle("Voice Commands")
-                .setText("Say 'Start Workout'")
+                .setText("Say 'Log Water'")
                 .setImage(CarIcon.APP_ICON)
                 .setOnClickListener {
-                    CarToast.makeText(carContext, "Listening for fitness command...", CarToast.LENGTH_LONG).show()
+                    screenManager.push(VoiceCommandScreen(carContext))
                 }
                 .build()
         )

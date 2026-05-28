@@ -24,7 +24,8 @@ object AppModule {
             context,
             IronCoreDatabase::class.java,
             "ironcore_db"
-        ).build()
+        ).fallbackToDestructiveMigration()
+            .build()
     }
 
     @Provides
@@ -40,5 +41,11 @@ object AppModule {
     @Provides
     fun provideUserProfileDao(database: IronCoreDatabase): UserProfileDao {
         return database.userProfileDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideBiometricAuthManager(@ApplicationContext context: Context): com.ironcore.metrics.ui.security.BiometricAuthManager {
+        return com.ironcore.metrics.ui.security.BiometricAuthManager(context)
     }
 }

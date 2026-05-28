@@ -18,5 +18,8 @@ data class RemoteMeal(
     val protein: Float,
     val carbs: Float,
     val fat: Float,
-    val ingredients: List<String>
+    val ingredients: List<String>,
+    val cookingInstructions: String? = null,
+    val prepTime: String? = null,
+    val difficulty: String? = null
 )

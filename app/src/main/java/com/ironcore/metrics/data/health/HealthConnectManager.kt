@@ -21,7 +21,7 @@ import javax.inject.Singleton
 class HealthConnectManager @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    private val healthConnectClient by lazy { HealthConnectClient.getOrCreate(context) }
+    val healthConnectClient by lazy { HealthConnectClient.getOrCreate(context) }
 
     val permissions = setOf(
         HealthPermission.getReadPermission(StepsRecord::class),

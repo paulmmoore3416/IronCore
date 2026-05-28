@@ -12,6 +12,9 @@ import com.ironcore.metrics.ui.onboarding.FirstRunScreen
 import com.ironcore.metrics.ui.social.SocialRoomScreen
 import com.ironcore.metrics.ui.ar.ARBodyProgressScreen
 import com.ironcore.metrics.ui.settings.SettingsScreen
+import com.ironcore.metrics.ui.device.DeviceManagerScreen
+import com.ironcore.metrics.ui.nutrition.MealDetailScreen
+import com.ironcore.metrics.ui.workout.SpecializedWorkoutScreen
 
 sealed class Screen(val route: String) {
     object Onboarding : Screen("onboarding")
@@ -19,8 +22,15 @@ sealed class Screen(val route: String) {
     object Workout : Screen("workout")
     object Nutrition : Screen("nutrition")
     object Settings : Screen("settings")
+    object DeviceManager : Screen("device_manager")
     object MetricDetail : Screen("metric_detail/{metricType}") {
         fun createRoute(metricType: String) = "metric_detail/$metricType"
+    }
+    object MealDetail : Screen("meal_detail/{mealJson}") {
+        fun createRoute(mealJson: String) = "meal_detail/${java.net.URLEncoder.encode(mealJson, "UTF-8")}"
+    }
+    object SpecializedWorkout : Screen("specialized_workout/{modality}") {
+        fun createRoute(modality: String) = "specialized_workout/${java.net.URLEncoder.encode(modality, "UTF-8")}"
     }
     object HydrationLogging : Screen("hydration_logging")
     object SocialRoom : Screen("social_room")
@@ -45,6 +55,7 @@ fun IronCoreNavGraph(navController: NavHostController) {
                 onMetricClick = { type ->
                     when (type) {
                         "hydration" -> navController.navigate(Screen.HydrationLogging.route)
+                        "device" -> navController.navigate(Screen.DeviceManager.route)
                         // Social and AR are disabled for Phase 1 (Production Readiness)
                         // "social" -> navController.navigate(Screen.SocialRoom.route)
                         // "ar" -> navController.navigate(Screen.ARBodyProgress.route)
@@ -54,13 +65,36 @@ fun IronCoreNavGraph(navController: NavHostController) {
             )
         }
         composable(Screen.Workout.route) {
-            WorkoutLoggerScreen()
+            WorkoutLoggerScreen(
+                onNavigateToModality = { modality -> 
+                    navController.navigate(Screen.SpecializedWorkout.createRoute(modality))
+                }
+            )
         }
         composable(Screen.Nutrition.route) {
-            NutritionScreen()
+            NutritionScreen(onNavigateToMealDetail = { mealJson -> 
+                navController.navigate(Screen.MealDetail.createRoute(mealJson))
+            })
         }
         composable(Screen.Settings.route) {
             SettingsScreen()
+        }
+        composable(Screen.DeviceManager.route) {
+            DeviceManagerScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.MealDetail.route) { backStackEntry ->
+            val mealJson = backStackEntry.arguments?.getString("mealJson") ?: ""
+            MealDetailScreen(
+                mealJson = java.net.URLDecoder.decode(mealJson, "UTF-8"),
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable(Screen.SpecializedWorkout.route) { backStackEntry ->
+            val modality = backStackEntry.arguments?.getString("modality") ?: ""
+            SpecializedWorkoutScreen(
+                modality = java.net.URLDecoder.decode(modality, "UTF-8"),
+                onBack = { navController.popBackStack() }
+            )
         }
         composable(Screen.MetricDetail.route) { backStackEntry ->
             val metricType = backStackEntry.arguments?.getString("metricType") ?: "unknown"

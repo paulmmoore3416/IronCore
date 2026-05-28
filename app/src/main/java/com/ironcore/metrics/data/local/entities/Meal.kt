@@ -15,7 +15,12 @@ data class Meal(
     val totalCalories: Int = 0,
     val proteinGrams: Float = 0f,
     val carbGrams: Float = 0f,
-    val fatGrams: Float = 0f
+    val fatGrams: Float = 0f,
+    val cuisine: String? = null,
+    val ingredients: String? = null, // JSON string of ingredients
+    val cookingInstructions: String? = null,
+    val prepTime: String? = null,
+    val difficulty: String? = null
 )
 
 @Entity(

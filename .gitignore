@@ -12,12 +12,23 @@ build/
 local.properties
 *.hprof
 *.pyc
+
 ## Android Studio
 *.keystore
 !/debug.keystore
+
 ## Kotlin
 .kotlin/
+
 ## Gradle
 .gradle/
 .bob/
 build/
+
+## Webapp
+node_modules/
+.env
+*.log
+dist/
+.env.local
+.env.*.local

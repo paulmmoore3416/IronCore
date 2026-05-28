@@ -136,7 +136,7 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.DarkMode, contentDescription = null)
+                Icon(Icons.Default.DarkMode, contentDescription = "Dark mode toggle")
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(stringResource(R.string.dark_mode), style = MaterialTheme.typography.titleMedium)
                         }
@@ -156,7 +156,7 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.CloudOff, contentDescription = null)
+                Icon(Icons.Default.CloudOff, contentDescription = "Offline mode toggle")
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(stringResource(R.string.offline_mode), style = MaterialTheme.typography.titleMedium)
                         }
@@ -178,7 +178,7 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Settings, contentDescription = null)
+                Icon(Icons.Default.Settings, contentDescription = "Advanced settings")
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = if (unitSystem == UnitSystem.METRIC) stringResource(R.string.metric) else stringResource(R.string.imperial),
@@ -204,7 +204,7 @@ fun SettingsScreen(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Memory, contentDescription = null)
+                Icon(Icons.Default.Memory, contentDescription = "AI model settings")
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Column {
                                     Text(stringResource(R.string.on_device_ai), style = MaterialTheme.typography.titleMedium)
@@ -223,7 +223,7 @@ fun SettingsScreen(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Memory, contentDescription = null)
+                Icon(Icons.Default.Memory, contentDescription = "Memory and performance settings")
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Column {
                                     Text(stringResource(R.string.remote_ai), style = MaterialTheme.typography.titleMedium)
